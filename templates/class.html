@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <h1>{{ classroom.teacher }} -- Grade {{ classroom.grade }}</h1>
+        </div>
+    </div>
+
+    {% for stu in classroom.students %}
+    <div class="row sturow">
+        <div class="col-md-3">
+        <h3>{{stu.firstname}} {{stu.lastname}}</h3>
+        </div>
+
+        {% for g in stu.family.guardians %}
+        <div class="col-md-3">
+            <h4>{{g.firstname}} {{g.lastname}}</h4>
+            {% if g.email %}<p><em>{{ g.email }}</em></p>{% endif %}
+
+            {% with phones=g.phones %}
+                {% if phones %}
+                <p>
+                    {% for ph in g.phones %}
+                    <b>{{ph.role}}:</b> {{ph.number}}<br>
+                    {% endfor %}
+                </p>
+                {% endif %}
+            {% endwith %}
+
+            {% if g.address %}
+            {% with addr = g.address %}
+            <p>
+                {{ addr.address1 }}<br>
+                {% if addr.address2 %}{{ addr.address2 }}<br>{% endif %}
+                {{ addr.city }} {{ addr.zipcode }}<br>
+            </p>
+            {% endwith %}{% endif %}
+        </div>
+        {% endfor %}
+
+    </div>
+    {% endfor %}
+{% endblock content %}

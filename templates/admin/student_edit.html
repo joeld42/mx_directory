@@ -1,0 +1,78 @@
+{% extends 'admin/model/edit.html' %}
+
+{% block body %}
+{{ super() }}
+<div class="span8" id="invoice">
+
+    {% if model.needsVerify() %}
+
+
+        <h3>PowerSchool Address</h3>
+        <div class="row">
+            <div class="span1">
+                <a class="btn btn-info" href="{{ url_for('admin.createAddrFromVerify', ver_id=model.verifyAddr.id) }}"><i class="con-map-marker"></i>Create</a>
+            </div>
+            <div class="span5">
+                <p>{{ model.verifyAddr.matchAddr }} {{ model.verifyAddr.zipcode }}</p>
+            </div>
+            <div class="span2">
+                <p><small>Create a new Guardian with this Address.</small></p>
+            </div>
+        </div>
+        <hr>
+
+        {% if model.family %}
+        <h3>Current Assignment</h3>
+        <div class="row">
+            <div class="span1">
+                <a class="btn btn-info" href="{{ url_for('admin.verify', ver_id=model.verifyAddr.id) }}"><i class="con-map-marker"></i>Verify</a>
+            </div>
+            <div class="span5">
+                {% for g in model.family.guardians %}
+                <p>
+                    <strong>{{ g.displayName() }}</strong><br>
+                    {% if g.address %}
+                    {{ g.address.address1 }}, {{ g.address.displayCity() }}
+                    {% endif %}
+                </p>
+                {% endfor %}
+            </div>
+            <div class="span2">
+                <p><small>This Guardian is currently assigned.</small></p>
+            </div>
+        </div>
+        {% endif %}
+
+        <h3>Possible Matches</h3>
+        <p>
+            <small>
+            <em>Assign</em> will assign the student to the listed Guardians and Address.
+            <em>Update</em> will do the same, but also update the address to the Imported one. Use 'Update' when
+            the imported address has more information than the listed one.
+            </small>
+        </p>
+        {% for addr,message in model.verifyAddr.fuzzyResults() %}
+        <div class="row" style="border-bottom: 1px solid #ccc; padding-top: 4px;">
+            <div class="span1">
+                <a class="btn btn-info" href="{{ url_for('admin.assignAddrFromVerify', ver_id=model.verifyAddr.id, addr_id=addr.id ) }}">
+                    <i class="con-map-marker"></i>Assign</a>
+            </div>
+            <div class="span1">
+                <a class="btn btn-warning" href=""><i class="con-map-marker"></i>Update</a>
+            </div>
+            <div class="span4">
+                {% for g in addr.guardians %}
+                <strong>{{ g.displayName() }}</strong><br>
+                {% endfor %}
+                {{ addr.address1 }} {% if addr.address2 %}{{ addr.address2 }}{%endif%} {{ addr.displayCity() }}
+            </div>
+            <div class="span2">
+                <p><small>{{ message }}</small></p>
+            </div>
+        </div>
+        {% endfor %}
+
+    {% endif %}
+
+</div>
+{% endblock %}

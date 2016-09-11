@@ -1,0 +1,21 @@
+
+{% macro fam_title( model) %}
+#{{ model.id }}
+{% endmacro %}
+
+{% macro fam_guardians( model ) %}
+    {% for g in model.guardians %}
+    {% if not loop.first %}<hr>{% endif %}
+    <strong><a href="{{ url_for('guardian.edit_view', id=g.id) }}" target="_blank">{{ g }}</a></strong><br>
+    <a href="{{ url_for('address.edit_view', id=g.address.id) }}">{{ g.address.address1 }}</a><br>
+    {% for p in g.phones %}
+        <a href="{{ url_for('phone.edit_view', id=p.id) }}" target="_blank">{{ p }}</a><br>
+    {% endfor %}
+{% endfor %}
+{% endmacro %}
+
+{% macro fam_students( model  ) %}
+    {% for s in model.students %}
+        <a href="{{ url_for('student.edit_view', id=s.id) }}" target="_blank">{{ s.displayName() }}</a><br>{{ s.classroom }}<br><br>
+    {% endfor %}
+{% endmacro %}

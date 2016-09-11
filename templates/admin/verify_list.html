@@ -1,0 +1,10 @@
+{% extends 'admin/model/list.html' %}
+
+
+{% macro verify_student(model, column) %}{%if model.student %}
+<a href="{{ url_for('student.edit_view', id=model.student.id) }}">{{ model.student.displayName() }} ({{ model.student.classroom.grade }})</a>
+{%endif%}{% endmacro %}
+
+{% block body %}
+{{ super() }}
+{% endblock body %}

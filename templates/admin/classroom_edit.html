@@ -1,0 +1,25 @@
+{% extends 'admin/model/edit.html' %}
+
+{% import "admin/adm_macros.html" as adm_macros %}
+
+{% block body %}
+{{ super() }}
+<div class="span8">
+
+    {% for fam in model.classFamilies() %}
+    <div class="row" style="border-bottom: 1px solid #ccc; padding-top: 4px;">
+            <div class="span1">
+            <a href="{{ url_for('family.edit_view', id=fam.id) }}">{{ adm_macros.fam_title(fam) }}</a>
+            </div>
+
+            <div class="span4">
+            {{ adm_macros.fam_guardians(fam) }}
+            </div>
+
+            <div class="span3">
+            {{ adm_macros.fam_students(fam) }}
+            </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

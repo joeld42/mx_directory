@@ -1,0 +1,12 @@
+
+{# NOTE THIS IS CURRENTLY UNUSED #}
+
+{% extends 'admin/model/list.html' %}
+
+{% macro fam_button( model, column) %}
+ <a class="btn btn-default" href="{{ url_for('family.index_view', room=model.id) }}">Families</a>
+{% endmacro %}
+
+{% block body %}
+{{ super() }}
+{% endblock body %}

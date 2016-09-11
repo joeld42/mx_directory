@@ -1,0 +1,9 @@
+{% extends 'admin/model/list.html' %}
+
+{% macro stu_family(model, column) %}
+<span class="label label-info"><a href="{{ url_for('family.edit_view', id=model.family.id ) }}">Family</a></span>
+{% endmacro %}
+
+{% block body %}
+{{ super() }}
+{% endblock body %}

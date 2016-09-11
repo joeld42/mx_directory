@@ -1,0 +1,60 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+{{ super() }}
+<div class="row-fluid">
+    <h1>MXPTA Directory</h1>
+    <p class="lead">
+        Directory of families.
+    </p>
+
+    <div class="well">
+        <h3 class="panel-title">Generate PDFs</h3>
+
+        <a class="btn btn-default" href="{{ url_for( '.genDirectory') }}"><i class="icon-print"></i>Directory</a>
+        <a class="btn btn-default" href="{{ url_for( '.genClassList') }}"><i class="icon-print"></i>Class List</a>
+
+        </div>
+    </div>
+
+    <div class="well">
+        <h3 class="panel-title">Bulk Import</h3>
+
+        <h4>Student Data</h4>
+        <p>
+        Import Student Data from TSV (tab-delimited) data.<br>
+        (New style with parent info)
+
+        <form method=POST enctype=multipart/form-data action="{{ url_for('.import_stu') }}">
+            <input type=file name=tsv>
+            <button type="submit" class="btn btn-primary">Import</button>
+        </form>
+        </p>
+
+        <h4>Student Data (OLD)</h4>
+        <p>
+        Import Student Data from old-style TSV (tab-delimited) data.<br>
+        (Old style with only address info)
+        
+        <form method=POST enctype=multipart/form-data action="{{ url_for('.import_stu_addronly') }}">
+            <input type=file name=tsv>    
+            <button type="submit" class="btn btn-primary">Import</button>  
+        </form>
+        </p>
+
+
+        <h4>Family Data (OLD)</h4>
+        <p>
+        Bulk Import Family Data from TSV (tab-delimited) data.<br>
+        (You only need to do this the first time the directory is created)
+        
+        <form method=POST enctype=multipart/form-data action="{{ url_for('.import_fam') }}">    
+            <input type=file name=tsv>    
+            <button type="submit" class="btn btn-primary">Import</button>  
+        </form>
+        </p>
+
+
+    </div>
+
+</div>
+{% endblock body %}

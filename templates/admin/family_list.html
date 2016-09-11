@@ -1,0 +1,20 @@
+{% extends 'admin/model/list.html' %}
+
+{% import "admin/adm_macros.html" as adm_macros %}
+
+{% macro m_fam_title( model, column) %}
+    {{ adm_macros.fam_title(model) }}
+{% endmacro %}
+
+{% macro m_fam_guardians( model, column) %}
+    {{ adm_macros.fam_guardians(model) }}
+{% endmacro %}
+
+{% macro m_fam_students( model, column) %}
+    {{ adm_macros.fam_students(model) }}
+{% endmacro %}
+
+
+{% block body %}
+{{ super() }}
+{% endblock body %}

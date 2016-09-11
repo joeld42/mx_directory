@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="row">
+        <div class="col-md-12">
+            <h2>MX Directories</h2>
+
+            <div id="images">
+                {% for pdf in pdfFiles %}
+                <a href="{{ url_for( 'static', filename=pdf[0] ) }}">
+                    <img src="{{ url_for( 'static', filename='icon-download-pdf-ebook.png' ) }}"  width="100px" height="100px">
+                    <div class="caption"><strong>{{ pdf[2] }}</strong></div>
+                    <div class="caption"><small>{{ pdf[1] }}</small></div>
+                </a>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+
+
+    {% for graderow in grades | slice (2) %}
+    <div class="row">
+        {% for grade in graderow %}
+        <div class="col-md-4">
+            <h2>Grade {{ grade }}</h2>
+            {% for cc in classesForGrade[grade] %}
+            <a href="{{ url_for('classroom', cc_id=cc.id ) }}">
+                {{ cc.teacher }}</a><br>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+{% endblock content %}
