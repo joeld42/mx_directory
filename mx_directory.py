@@ -26,6 +26,10 @@ from sqlalchemy import or_, and_
 app = Flask(__name__)
 app.config.from_envvar( 'MXDIR_SETTINGS' )
 
+# Session
+app.secret_key = app.config['SESSION_KEY']
+app.config['SESSION_TYPE'] = 'filesystem'
+
 # Remove any existing loggers
 while len(logging.root.handlers):
     logging.root.removeHandler( logging.root.handlers[-1])
@@ -116,8 +120,12 @@ def test():
 
 @app.route('/reset')
 def reset():
-    model.rebuild_db()
-    return "Reset DB..."
+    appEnv = app.config['ENVIRONMENT']
+    if appEnv=='dev':
+        model.rebuild_db()
+        return "Reset DB..."
+    else:
+        return "Reset: Not allowed on environment " + appEnv
 
 
 
@@ -125,10 +133,6 @@ def reset():
 # main for command line
 # -----------------------------------------------------------
 if __name__ == '__main__':
-
-    # Session
-    app.secret_key = app.config['SESSION_KEY']
-    app.config['SESSION_TYPE'] = 'filesystem'
 
     # Uncomment these lines to initialize the database
     # print "Rebuilding database..."
