@@ -34,14 +34,42 @@ import datetime
 
 tsvUploadSet = flask_uploads.UploadSet( 'tsv', ['tsv','csv'] )
 
+SECRET_ADMIN_TOKEN = 'Y5<84jM>v$:[sU}'
+
+def checkAuth():
+    return session.get('admin_auth', None) == SECRET_ADMIN_TOKEN
+
 class MXDirectoryModelView(ModelView):
     page_size = 100
+
+    def is_accessible(self):
+        return checkAuth()
 
 class HomeView(AdminIndexView):
 
     @expose("/")
     def index(self):
-        return self.render('admin/index.html')
+
+        if not checkAuth():
+            return self.render('admin/login.html')
+        else:
+            return self.render('admin/index.html')
+
+    @expose("/admlogin", methods=['POST'])
+    def admlogin(self):
+
+        if request.form['password'] == self.adminPass:
+            session['admin_auth'] = SECRET_ADMIN_TOKEN
+        else:
+            session['admin_auth'] = None
+
+        return redirect(url_for('.index'))
+
+    @expose("/admlogout" )
+    def admlogout(self):
+        session['admin_auth'] = None
+
+        return redirect(url_for('.index'))
 
     @expose("/import_fam", methods=['POST'])
     def import_fam(self):
@@ -214,6 +242,7 @@ def init_admin(app):
     admin = Admin(app, "directory.mxpta.org", index_view=adminHome )
                   #, template_mode='bootstrap3' )
     adminHome.pdfPath = app.config['PDF_PATH']
+    adminHome.adminPass = app.config['ADMIN_PASSWORD']
 
     admin.add_view( FamilyModelView( Family, db.session, category='Directory' ))
     admin.add_view( MXDirectoryModelView( Address, db.session, category='Directory' ))
