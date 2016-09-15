@@ -9,19 +9,25 @@ import admin
 
 from fpdf import FPDF
 
-class ClassSheet(FPDF):
+class MXDirectoryPDF(FPDF):
 
-    def __init__(self, numCols):
+    def __init__(self,  classSheetMode):
         FPDF.__init__(self)
+
+        self.classSheetMode = classSheetMode
 
         self.currClass = "None"
 
-
         self.colSpc = 5
-        self.numCols =  numCols
+        if classSheetMode:
+            self.numCols = 1
+        else:
+            self.numCols = 4
+
         self.currCol = 0
 
-        self.colWidth = int((self.w - ((self.l_margin+self.r_margin) + (self.colSpc * (numCols-1))) ) / self.numCols)
+
+        self.colWidth = int((self.w - ((self.l_margin+self.r_margin) + (self.colSpc * (self.numCols-1))) ) / self.numCols)
 
     def header(self):
         # Logo
@@ -152,9 +158,9 @@ class ClassSheet(FPDF):
 
         return hite
 
-def generatePDFClassSheet( pdf_file ):
+def generatePDF( pdf_file, classSheet ):
 
-    pdf = ClassSheet( 1 )
+    pdf = MXDirectoryPDF(  classSheet )
     pdf.alias_nb_pages()
 
     pdf.set_auto_page_break( False, 0.0 )
@@ -165,10 +171,10 @@ def generatePDFClassSheet( pdf_file ):
         for stu in room.students:
             pdf.emitStudent( stu)
 
-
-
-    #for i in range(1, 41):
-        # pdf.cell(0, 10, 'Printing line number ' + str(i), 0, 1)
-
-
     pdf.output( pdf_file, 'F')
+
+def generatePDFClassSheet( pdf_file ):
+    generatePDF( pdf_file, True )
+
+def generatePDFDirectory( pdf_file ):
+    generatePDF( pdf_file, False )

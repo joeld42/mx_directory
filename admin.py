@@ -108,7 +108,7 @@ class HomeView(AdminIndexView):
     @expose("/gen_dir" )
     def genDirectory(self):
 
-
+        outpdf.generatePDFDirectory( os.path.join( self.pdfPath, 'mx_directory.pdf' ))
         return 'Gen dir'
 
     @expose("/gen_class" )

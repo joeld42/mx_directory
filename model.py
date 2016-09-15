@@ -270,7 +270,11 @@ class Classroom( db.Model ):
         for s in self.students:
             families.add( s.family )
 
-        return list(families)
+        classfams = list(families)
+
+        classfams.sort( key=lambda f: f.students[0].lastname )
+
+        return classfams
 
     def __repr__(self):
         return '%s (%s)' % (self.teacher, self.grade );

@@ -28,7 +28,7 @@
                 {% endif %}
             {% endwith %}
 
-            {% if g.address %}
+            {% if g.address and ((loop.index0 == 0) or (g.address != stu.family.guardians[0].address))  %}
             {% with addr = g.address %}
             <p>
                 {{ addr.address1 }}<br>

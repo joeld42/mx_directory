@@ -7,6 +7,7 @@
     {% for g in model.guardians %}
     {% if not loop.first %}<hr>{% endif %}
     <strong><a href="{{ url_for('guardian.edit_view', id=g.id) }}" target="_blank">{{ g }}</a></strong><br>
+    {% if g.email %}<a href="{{ url_for('guardian.edit_view', id=g.id) }}" target="_blank"><em>{{g.email}}</em></a><br>{% endif %}
     <a href="{{ url_for('address.edit_view', id=g.address.id) }}">{{ g.address.address1 }}</a><br>
     {% for p in g.phones %}
         <a href="{{ url_for('phone.edit_view', id=p.id) }}" target="_blank">{{ p }}</a><br>
