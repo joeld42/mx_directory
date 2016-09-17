@@ -1,0 +1,32 @@
+{% extends 'admin/model/edit.html' %}
+
+{% import "admin/adm_macros.html" as adm_macros %}
+
+{% block body %}
+{{ super() }}
+<div class="span8">
+
+        {% if model.address %}
+            <a class="btn btn-info" href="{{ url_for('address.edit_view', id=model.address.id ) }}">
+                            <i class="con-map-marker"></i>Edit Address</a>
+        {% endif %}
+
+        {% for ph in model.phones %}
+            <a class="btn btn-info" href="{{ url_for('phone.edit_view', id=ph.id ) }}">
+                        <i class="con-map-marker"></i>Edit {{ ph.role }} {{ ph.number }}</a>
+        {% endfor %}
+
+        <br><br>
+
+        <a class="btn btn-info" href="{{ url_for('admin.quickAddAddress', guardian_id=model.id ) }}">
+                        <i class="con-map-marker"></i>New Address</a>
+
+        <a class="btn btn-info" href="{{ url_for('admin.quickAddPhone', guardian_id=model.id ) }}">
+                        <i class="con-map-marker"></i>Add Phone</a>
+
+        <br><br>
+        <a class="btn btn-info" href="{{ url_for('admin.duplicateGuardian', guardian_id=model.id ) }}">
+                        <i class="con-map-marker"></i>Duplicate Guardian</a>
+
+</div>
+{% endblock %}
