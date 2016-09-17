@@ -10,7 +10,9 @@
         <h3>PowerSchool Address</h3>
         <div class="row">
             <div class="span1">
+                {% if model.verifyAddr %}
                 <a class="btn btn-info" href="{{ url_for('admin.createAddrFromVerify', ver_id=model.verifyAddr.id) }}"><i class="con-map-marker"></i>Create</a>
+                {% endif %}
             </div>
             <div class="span5">
                 <p>{{ model.verifyAddr.matchAddr }} {{ model.verifyAddr.zipcode }}</p>
@@ -51,26 +53,30 @@
             the imported address has more information than the listed one.
             </small>
         </p>
-        {% for addr,message in model.verifyAddr.fuzzyResults() %}
-        <div class="row" style="border-bottom: 1px solid #ccc; padding-top: 4px;">
-            <div class="span1">
-                <a class="btn btn-info" href="{{ url_for('admin.assignAddrFromVerify', ver_id=model.verifyAddr.id, addr_id=addr.id ) }}">
-                    <i class="con-map-marker"></i>Assign</a>
+        {% if model.verifyAddr %}
+            {% for addr,message in model.verifyAddr.fuzzyResults() %}
+            <div class="row" style="border-bottom: 1px solid #ccc; padding-top: 4px;">
+                <div class="span1">
+                    {% if model.verifyAddr %}
+                    <a class="btn btn-info" href="{{ url_for('admin.assignAddrFromVerify', ver_id=model.verifyAddr.id, addr_id=addr.id ) }}">
+                        <i class="con-map-marker"></i>Assign</a>
+                    {% endif %}
+                </div>
+                <div class="span1">
+                    <a class="btn btn-warning" href=""><i class="con-map-marker"></i>Update</a>
+                </div>
+                <div class="span4">
+                    {% for g in addr.guardians %}
+                    <strong>{{ g.displayName() }}</strong><br>
+                    {% endfor %}
+                    {{ addr.address1 }} {% if addr.address2 %}{{ addr.address2 }}{%endif%} {{ addr.displayCity() }}
+                </div>
+                <div class="span2">
+                    <p><small>{{ message }}</small></p>
+                </div>
             </div>
-            <div class="span1">
-                <a class="btn btn-warning" href=""><i class="con-map-marker"></i>Update</a>
-            </div>
-            <div class="span4">
-                {% for g in addr.guardians %}
-                <strong>{{ g.displayName() }}</strong><br>
-                {% endfor %}
-                {{ addr.address1 }} {% if addr.address2 %}{{ addr.address2 }}{%endif%} {{ addr.displayCity() }}
-            </div>
-            <div class="span2">
-                <p><small>{{ message }}</small></p>
-            </div>
-        </div>
-        {% endfor %}
+            {% endfor %}
+        {% endif %}
 
     {% endif %}
 

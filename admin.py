@@ -4,7 +4,7 @@
 import os, sys, string
 import random
 
-from flask import request, session, redirect, url_for, Markup, Response, abort
+from flask import request, session, redirect, url_for, Markup, Response, abort, redirect
 
 from flask.ext.admin import Admin, BaseView, expose
 from flask.ext.admin.contrib.sqla import ModelView
@@ -172,8 +172,8 @@ class HomeView(AdminIndexView):
         verifyAddr.student.family = fam
         db.session.commit()
 
-    # EHRE FIX
         return redirect( url_for('verifyaddr'))
+
 
     @expose('/verify/<int:ver_id>')
     def verify( self, ver_id ):
@@ -208,6 +208,50 @@ class HomeView(AdminIndexView):
 
         return self.assignFromVerify( ver_id, addr_id, True )
 
+    @expose('/duplicate_guardian/<int:guardian_id>')
+    def duplicateGuardian(self, guardian_id ):
+
+        if not guardian_id:
+            return "Missing guardian id"
+
+        g = Guardian.query.get( guardian_id )
+        dupe_guardian = g.duplicate()
+
+        return redirect( url_for('guardian.edit_view', id=dupe_guardian.id) )
+
+    @expose('/guardian_add_address/<int:guardian_id>')
+    def quickAddAddress(self, guardian_id ):
+
+        if not guardian_id:
+            return "Missing guardian id"
+
+        g = Guardian.query.get( guardian_id )
+
+        addr = Address()
+
+        db.session.add( addr )
+        g.address = addr
+
+        db.session.commit()
+
+        return redirect( url_for('address.edit_view', id=addr.id) )
+
+    @expose('/guardian_add_phone/<int:guardian_id>')
+    def quickAddPhone(self, guardian_id ):
+
+        if not guardian_id:
+            return "Missing guardian id"
+
+        g = Guardian.query.get( guardian_id )
+        ph = Phone()
+        ph.role = 'Phone'
+        ph.number= '(555) 555-5555'
+        ph.guardian = g
+
+        db.session.add( ph )
+        db.session.commit()
+
+        return redirect( url_for('phone.edit_view', id=ph.id) )
 
 
 class StudentModelView(MXDirectoryModelView):
@@ -220,6 +264,9 @@ class VerifyAddrModelView(MXDirectoryModelView):
 class ClassroomModelView(MXDirectoryModelView):
     #list_template = 'admin/classroom_list.html'
     edit_template = 'admin/classroom_edit.html'
+
+class GuardianModelView(MXDirectoryModelView):
+    edit_template = 'admin/guardian_edit.html'
 
 class FamilyModelView(MXDirectoryModelView):
     page_size = 50
@@ -248,7 +295,7 @@ def init_admin(app):
     admin.add_view( MXDirectoryModelView( Address, db.session, category='Directory' ))
     admin.add_view( MXDirectoryModelView( Phone, db.session, category='Directory' ))
 
-    admin.add_view( MXDirectoryModelView( Guardian, db.session, category='Directory' ))
+    admin.add_view( GuardianModelView( Guardian, db.session, category='Directory' ))
     admin.add_view( StudentModelView( Student, db.session, category='Directory' ))
     #admin.add_view( MXDirectoryModelView( Student, db.session, category='Directory' ))
     admin.add_view( ClassroomModelView( Classroom, db.session, category='Directory' ))

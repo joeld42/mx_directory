@@ -229,6 +229,25 @@ class Guardian( db.Model ):
     def displayName(self):
         return ('%s %s' % (self.firstname, self.lastname )).encode('utf8')
 
+    def duplicate( self ):
+
+        dupe = Guardian()
+        dupe.family_id = self.family_id
+        dupe.address_id = self.address_id
+        dupe.firstname = self.firstname
+        dupe.lastname = self.lastname
+        dupe.email = self.email
+
+        for ph in self.phones:
+            pdupe = Phone()
+            pdupe.role = ph.role
+            pdupe.number = ph.number
+            pdupe.guardian_id = dupe
+
+        db.session.add( dupe )
+        db.session.commit()
+        return dupe
+
 
 class Student( db.Model ):
     id = db.Column( db.Integer, primary_key=True )
