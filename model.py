@@ -238,13 +238,15 @@ class Guardian( db.Model ):
         dupe.lastname = self.lastname
         dupe.email = self.email
 
+        db.session.add( dupe )
+
         for ph in self.phones:
             pdupe = Phone()
             pdupe.role = ph.role
             pdupe.number = ph.number
-            pdupe.guardian_id = dupe
+            pdupe.guardian = dupe
+            db.session.add(pdupe)
 
-        db.session.add( dupe )
         db.session.commit()
         return dupe
 
