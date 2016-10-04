@@ -339,7 +339,12 @@ def generatePDF( pdf_file, classSheet ):
     pdf.set_auto_page_break( False, 0.0 )
 
     dbgRoomCount = 0
-    for room in model.Classroom.query.all():
+    sortKeyForGrade = { 'TK' : -1, 'K' : 0 }
+    rooms = list(model.Classroom.query.all())
+
+    rooms.sort( key=lambda x: ( sortKeyForGrade.get( x.grade, "Z"+x.grade ), x.teacher) )
+
+    for room in rooms:
 
         pdf.startClass( room )
         for stu in room.students:

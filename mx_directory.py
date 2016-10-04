@@ -96,7 +96,7 @@ def index():
             ]
 
 
-    return render_template( "index.html", grades=[ 'K','1','2','3','4','5'],
+    return render_template( "index.html", grades=[ 'TK','K','','1','2','3','4','5'],
                             classesForGrade = classesForGrade,
                             pdfFiles=pdfFiles)
 

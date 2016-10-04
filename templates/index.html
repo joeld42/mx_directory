@@ -6,6 +6,30 @@
         <div class="col-md-12">
             <h2>MX Directories</h2>
 
+        </div>
+    </div>
+
+
+    {% for graderow in grades | slice (3) %}
+    <div class="row">
+        {% for grade in graderow %}
+            {% if grade %}
+            <div class="col-md-4">
+                <h2>Grade {{ grade }}</h2>
+                {% for cc in classesForGrade[grade] %}
+                <a href="{{ url_for('classroom', cc_id=cc.id ) }}">
+                    {{ cc.teacher }}</a><br>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+
+    <div class="row">
+        <div class="col-md-12">
+
             <div id="images">
                 {% for pdf in pdfFiles %}
                 <a href="{{ url_for( 'static', filename=pdf[0] ) }}">
@@ -18,20 +42,5 @@
 
         </div>
     </div>
-
-
-    {% for graderow in grades | slice (2) %}
-    <div class="row">
-        {% for grade in graderow %}
-        <div class="col-md-4">
-            <h2>Grade {{ grade }}</h2>
-            {% for cc in classesForGrade[grade] %}
-            <a href="{{ url_for('classroom', cc_id=cc.id ) }}">
-                {{ cc.teacher }}</a><br>
-            {% endfor %}
-        </div>
-        {% endfor %}
-    </div>
-    {% endfor %}
 
 {% endblock content %}
