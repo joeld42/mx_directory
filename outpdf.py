@@ -10,6 +10,9 @@ import admin
 
 from fpdf import FPDF
 
+def xstr(s):
+    return '' if s is None else s
+
 class MXDirectoryPDF(FPDF):
 
     def __init__(self,  classSheetMode):
@@ -184,7 +187,7 @@ class MXDirectoryPDF(FPDF):
                     hite += self.mcell( monly, 0, 2, '', 0, 2)
 
                 first = False
-                gname = string.strip( g.firstname + ' ' + g.lastname )
+                gname = string.strip( xstr(g.firstname) + ' ' + xstr(g.lastname) )
                 if gname:
                     self.mset_font( monly, 'Arial', 'B', 8)
                     hite += self.mcell( monly, self.colWidth, 4, gname, 0, 2)
@@ -201,8 +204,9 @@ class MXDirectoryPDF(FPDF):
 
                 for p in g.phones:
                     if not p in listedPhones:
-                        fields += [ '%s: %s' % ( p.role, p.number)]
-                        listedPhones.append(p)
+                        if p.role and p.number:
+                            fields += [ '%s: %s' % ( p.role, p.number)]
+                            listedPhones.append(p)
 
                 for field in fields:
                     if field:
