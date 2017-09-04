@@ -52,7 +52,7 @@ for k, vals in ADDR_NORMS.iteritems():
 
 def normalizeAddress( addr ):
 
-    print "normalize ", addr
+    #print "normalize ", addr
     addr2 = []
     for part in string.split(string.strip(addr)):
 
@@ -66,8 +66,8 @@ def normalizeAddress( addr ):
 
     addrNorm = u' '.join(addr2)
 
-    if addr != addrNorm:
-        print "NORM: ", addr, " -> ", addrNorm
+    #if addr != addrNorm:
+    #    print "NORM: ", addr, " -> ", addrNorm
 
     return addrNorm
 
@@ -289,11 +289,12 @@ class Classroom( db.Model ):
     def classFamilies(self ):
         families = set()
         for s in self.students:
-            families.add( s.family )
+            if s.family:
+                families.add( s.family )
 
         classfams = list(families)
 
-        classfams.sort( key=lambda f: f.students[0].lastname )
+        classfams.sort( key=lambda f: f.students[0].lastname or "" )
 
         return classfams
 

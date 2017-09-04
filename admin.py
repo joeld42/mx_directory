@@ -21,7 +21,7 @@ from wtforms.fields import SelectField
 from model import Family, Address, Phone, Guardian, Student, Classroom, VerifyAddr
 from model import db
 
-from bulk_import import importFamilyTSV, importStudentTSV, importStudentAndGuardianTSV
+from bulk_import import importFamilyTSV, importStudentTSV, importStudentAndGuardianTSV, importStudentAndGuardianTSV2017
 
 import model
 
@@ -104,6 +104,17 @@ class HomeView(AdminIndexView):
 
         return "Imported Student data...<br>" + message
 
+    @expose("/import_stu2017", methods=['POST'])
+    def import_stu2017(self):
+
+        message = "No student data uploaded..."
+
+        if request.method == 'POST' and 'tsv' in request.files:
+            filename = tsvUploadSet.save( request.files['tsv'])
+            message = importStudentAndGuardianTSV2017( tsvUploadSet.path(filename) )
+
+        return "Imported Student data...<br>" + message
+
 
     @expose("/gen_dir" )
     def genDirectory(self):
@@ -116,6 +127,52 @@ class HomeView(AdminIndexView):
         outpdf.generatePDFClassSheet( os.path.join( self.pdfPath, 'mx_dir_classsheets.pdf' ))
 
         return 'Gen class'
+
+    @expose("/gen_email_list")
+    def genEmailList(self):
+
+        emails = {}
+
+        for fam in Family.query.all():
+
+            hasStuInClassroom = False
+            for stu in fam.students:
+                if stu.classroom:
+                   hasStuInClassroom = True
+                   break
+
+            if not hasStuInClassroom:
+                continue
+
+            # get emails for all guardians
+            count = 0
+            for guardian in fam.guardians:
+
+                email = guardian.email
+                if email and not emails.has_key( email ):
+                    emails[email] = (count, '%s %s &lt%s&gt' % (guardian.firstname, guardian.lastname, email))
+
+                count += 1
+
+        all_emails = list(emails.values())
+        all_emails.sort()
+        result = ""
+        curr_index = -1
+
+        for e in all_emails:
+            ndx, email = e
+            if ndx != curr_index:
+                result += ("<h2>Contact %d</h2>" % (ndx+1))
+                curr_index = ndx
+
+            result += email + "<br>"
+
+
+
+        return result
+
+        #for student in Student.query.all():
+        #    pass
 
     # --- Routines to handle verify addrs
     @expose('/create_addr/<int:ver_id>')

@@ -350,6 +350,10 @@ def generatePDF( pdf_file, classSheet ):
 
     for room in rooms:
 
+        # Special grade for "Unassigned" students
+        if room.grade=='X':
+            continue
+
         pdf.startClass( room )
         for stu in room.students:
             pdf.emitStudent( stu)
