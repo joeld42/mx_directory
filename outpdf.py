@@ -13,6 +13,17 @@ from fpdf import FPDF
 def xstr(s):
     return '' if s is None else s
 
+INSTRUCTIONS = """
+INSTRUCTIONS: Please verify the data above and mark with a check in column
+on left if correct and no edits need to be made. For edits: Strike through
+any information you do not want included in the directory and use the space
+provided to indicate any corrections or additional contacts.
+<br>
+The email address listed will automatically be added to the MX Etree and
+the PTA Evite.  Write 'NO ETREE' in the space provided if you prefer
+not to receive important school information this way.
+"""
+
 class MXDirectoryPDF(FPDF):
 
     def __init__(self,  classSheetMode):
@@ -62,16 +73,24 @@ class MXDirectoryPDF(FPDF):
     def footer(self):
 
         if (self.classSheetMode):
-            # Position at 1.5 cm from bottom
-            self.set_y(-15)
-            self.line( 10, self.h - 15, self.w-10, self.h-15)
+            # Position at 2.8 cm from bottom
+            yoffs = 28
+            self.set_y(-yoffs)
+            self.line( 10, self.h - (yoffs+1), self.w-10, self.h-(yoffs+1) )
             # Arial italic 8
             self.set_font('Arial', 'I', 8 )
-            self.cell( 0, 10, 'Instructions: Please verify the data above and mark with a check if correct. Strike through any information ' )
-            self.ln(4)
-            # self.cell( 0, 10, '')
+
+            # self.cell( 0, 10, 'Instructions: Please verify the data above and mark with a check if correct. Strike through any information ' )
             # self.ln(4)
-            self.cell( 0, 10, 'you do not want included in the directory. Use the space provided to indicate any corrections or additional contacts.')
+            # # self.cell( 0, 10, '')
+            # # self.ln(4)
+            # self.cell( 0, 10, 'you do not want included in the directory. Use the space provided to indicate any corrections or additional contacts.')
+
+            inst = string.split( string.strip(INSTRUCTIONS), '\n')
+            inst = ' '.join( inst )
+            inst = inst.replace( '<br>', '\n\n' )
+
+            self.multi_cell( 0, 2.5, inst )
 
             # Page number
             #self.cell(0, 10, 'Page ' + str(self.page_no()) + '/{nb}', 0, 0, 'C')
@@ -104,7 +123,7 @@ class MXDirectoryPDF(FPDF):
         hite = self._doEmitStudent( stu, True )
 
         # see if it will fit
-        pageMargHite = 20
+        pageMargHite = 25
         if not self.classSheetMode:
             pageMargHite = 10
 
@@ -355,7 +374,13 @@ def generatePDF( pdf_file, classSheet ):
             continue
 
         pdf.startClass( room )
-        for stu in room.students:
+
+        stus = list(room.students)
+
+        stus.sort( key=lambda x: x.displayName() )
+        #rooms.sort( key=lambda x: ( sortKeyForGrade.get( x.grade, "Z"+x.grade ), x.teacher) )
+
+        for stu in stus:
             pdf.emitStudent( stu)
 
         # DBG - stop early for faster testing
