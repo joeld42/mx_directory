@@ -294,7 +294,7 @@ class Classroom( db.Model ):
 
         classfams = list(families)
 
-        classfams.sort( key=lambda f: f.students[0].lastname or "" )
+        classfams.sort( key=lambda f: f.students[0].firstname or "" )
 
         return classfams
 

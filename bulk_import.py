@@ -28,6 +28,10 @@ TEACHER_NAME_FIX = {
 
     'Jila Abdolhosseini' : 'Beers, Julia; Abdolhosseini, Jila',
     'Julia Beers' : 'Beers, Julia; Abdolhosseini, Jila',
+
+    'Thuy-Mi Dang' : 'Dang, Mimi',
+
+    'May Lynne Gill': 'Gill, May Lynne'
 }
 
 def importFamilyTSV( filename ):
