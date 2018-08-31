@@ -256,6 +256,7 @@ class Student( db.Model ):
     family_id = db.Column(db.Integer, db.ForeignKey('family.id'))
     firstname = db.Column(db.String(80))
     lastname = db.Column(db.String(80))
+    student_id = db.Column( db.Integer )
 
     classroom_id = db.Column(db.Integer, db.ForeignKey('classroom.id'))
 

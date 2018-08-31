@@ -373,9 +373,14 @@ def generatePDF( pdf_file, classSheet ):
         if room.grade=='X':
             continue
 
+        # Skip empty teachers
+        stus = list(room.students)
+        if len(stus)==0:
+            continue
+
         pdf.startClass( room )
 
-        stus = list(room.students)
+
 
         stus.sort( key=lambda x: x.displayName() )
         #rooms.sort( key=lambda x: ( sortKeyForGrade.get( x.grade, "Z"+x.grade ), x.teacher) )
