@@ -126,11 +126,21 @@ class HomeView(AdminIndexView):
             if stu.family and stu.family.guardians:
                 for guardian in stu.family.guardians:
                     if guardian.email:
-                        stuname = "%s %s" % (stu.firstname, stu.lastname)
-                        teacher = stu.classroom.teacher
-                        grade = stu.classroom.grade
-                        email = "%s %s <%s>" % (guardian.firstname, guardian.lastname, string.strip(guardian.email))
-                        emails.append( (stuname, teacher, grade, email) )
+
+                        # Some people have multiple emails in this field
+                        rawEmail = string.replace( guardian.email, ',', ' ')
+                        for em in string.split(rawEmail):
+                            if em:
+
+                                # TODO better validation regex
+                                if (em.find('@') == -1):
+                                    continue
+
+                                stuname = "%s %s" % (stu.firstname, stu.lastname)
+                                teacher = stu.classroom.teacher
+                                grade = stu.classroom.grade
+                                email = "%s %s <%s>" % (string.strip(guardian.firstname), string.strip(guardian.lastname), string.strip(em))
+                                emails.append( (stuname, teacher, grade, email) )
 
         return emails
 
