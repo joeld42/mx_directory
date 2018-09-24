@@ -115,6 +115,49 @@ class HomeView(AdminIndexView):
 
         return "Imported Student data...<br>" + message
 
+    def gatherEmailList(self):
+        emails = []
+        unassigned = Classroom.query.filter( Classroom.teacher == 'Unassigned')[0]
+        for stu in Student.query.filter( Student.classroom != unassigned ):
+            if stu.classroom is None:
+                print "No class assigned ", stu.firstname, stu.lastname
+                continue
+
+            if stu.family and stu.family.guardians:
+                for guardian in stu.family.guardians:
+                    if guardian.email:
+                        stuname = "%s %s" % (stu.firstname, stu.lastname)
+                        teacher = stu.classroom.teacher
+                        grade = stu.classroom.grade
+                        email = "%s %s <%s>" % (guardian.firstname, guardian.lastname, string.strip(guardian.email))
+                        emails.append( (stuname, teacher, grade, email) )
+
+        return emails
+
+    @expose("/report_email_list")
+    def reportEmailList(self):
+        emails = self.gatherEmailList()
+
+        justEmails = set()
+        for info in emails:
+            justEmails.add( info[-1])
+
+        justEmails = list(justEmails)
+        justEmails.sort()
+        rawEmailList = '\n'.join( justEmails )
+        return Response(rawEmailList, mimetype='text/plain')
+
+    @expose("/report_email_list_tsv")
+    def reportEmailListTsv(self):
+        emails =[ ( "Student", "Teacher", "Grade", "Parent Email") ] + self.gatherEmailList()
+
+        rawEmailList = []
+        for entry in emails:
+            rawEmailList.append( '\t'.join( entry ))
+
+        rawEmailList = '\n'.join( rawEmailList )
+        return Response(rawEmailList, mimetype='text/plain')
+
 
     @expose("/gen_dir" )
     def genDirectory(self):

@@ -352,8 +352,8 @@ def findOrCreateGuardians( stuInfo ):
     print "STUINFO: ", stuInfo
     #fullname1  = stuInfo["primary contact name (first last)"]
     #firstName1, lastName1 = splitName( fullname1 )
-    firstName1 = stuInfo["parent first name"]
-    lastName1 = stuInfo["parent last name"]
+    firstName1 = stuInfo["primary contact first name"]
+    lastName1 = stuInfo["primary contact last name"]
     address = stuInfo["address"]
 
     asplit = string.split(address,' ')
@@ -387,7 +387,7 @@ def findOrCreateGuardians( stuInfo ):
                                                   Guardian.email==searchEmail1 ) )
     guardian1 = list( guardian1 )
     if (len(guardian1)>1):
-        print ">>>> MULTIPLE GUARDIAN ", fullname1, email1, len(guardian1)
+        print ">>>> MULTIPLE GUARDIAN ", firstName1, lastName1, email1, len(guardian1)
         for gg in guardian1:
             print gg.id, gg.displayName(), gg.email
 
@@ -438,7 +438,7 @@ def findOrCreateTeacherForStudent( stuInfo ):
     if len(teacher)==0:
         print "COULD NOT FIND TEACHER '%s' (%s)" % ( stuInfo["teacher"], teacherName )
 
-        newClass = Classroom( teacher = teacherName )
+        newClass = Classroom( teacher = teacherName, grade = stuInfo["grade"] )
         db.session.add( newClass )
         db.session.commit()
 
@@ -601,11 +601,11 @@ def importStudentAndGuardianTSV2017( filename ):
     #db.session.commit()
 
     # Remove students from Classrooms
-    for stu in Student.query.filter( Student.classroom != unassigned ):
+    #for stu in Student.query.filter( Student.classroom != unassigned ):
 
-        print "unassigning ", stu, stu.firstname
-        stu.classroom = unassigned
-        db.session.commit()
+    #    print "unassigning ", stu, stu.firstname
+    #    stu.classroom = unassigned
+    #    db.session.commit()
 
     notfound = {}
     total = 0
@@ -644,7 +644,7 @@ def importStudentAndGuardianTSV2017( filename ):
                 stuInfo[k] = lsplit[cndx]
 
             # Skip K students for the moment
-            if stuInfo["grade"]=='K':
+            if not stuInfo["grade"] in ['K', 'TK']:
                 continue
 
             result = updateStudent( stuInfo )
