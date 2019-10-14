@@ -1,0 +1,115 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+{{ super() }}
+
+{% if msg %}
+<div class="row">
+    <div class="span12">
+        <div class="alert alert-success" role="alert">
+        {{ msg }}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+    <form class="navbar-form pull-left" method="POST" action="{{ url_for('.formAddStudent') }}">
+        <div class="row">
+            <div class="span12"><h3>Student Info</h3></div>
+        </div>
+
+        <div class="row">
+        <div class="span2">
+            Class:
+        </div>
+        <div class="span10">
+            <select name="classroom">
+                {% for class in classrooms %}
+                <option value="{{ class.id }}">{{ class.teacher }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="span2">
+            Student ID (if known):
+        </div>
+        <div class="span10">
+            <input type="text" name="student_id"><br>
+        </div>
+
+
+        <div class="span2">
+            First Name:
+        </div>
+        <div class="span10">
+            <input type="text" name="first_name"><br>
+        </div>
+
+        <div class="span2">
+            Last Name:
+        </div>
+        <div class="span10">
+            <input type="text" name="last_name"><br>
+        </div>
+
+        <div class="span12"><h3>Guardian Info</h3><hr></div>
+
+        <div class="span2">
+            First Name:
+        </div>
+        <div class="span10">
+            <input type="text" name="guard_first_name"><br>
+        </div>
+
+        <div class="span2">
+            Last Name:
+        </div>
+        <div class="span10">
+            <input type="text" name="guard_last_name"><br>
+        </div>
+
+        <div class="span2">
+            Email:
+        </div>
+        <div class="span10">
+            <input type="text" name="guard_email"><br>
+        </div>
+
+        <div class="span2">
+            Phone:
+        </div>
+        <div class="span3">
+            <input type="text" name="guard_phone"><br>
+        </div>
+        <div class="span7">
+            <select name="guard_phone_role">
+                <option value="Home">Home</option>
+                <option value="Cell">Cell</option>
+            </select>
+        </div>
+
+
+        <div class="span2">
+            Address:
+        </div>
+        <div class="span4">
+            <input type="text" name="guard_address"><br>
+        </div>
+        <div class="span3">
+            <input type="text" name="guard_city"><br>
+            <h5>city</h5>
+        </div>
+        <div class="span3">
+            <input type="text" name="guard_zipcode"><br>
+            <h5>zip</h5>
+        </div>
+
+
+
+
+        <div class="span12">
+            <hr>
+            <button type="submit" class="btn">Submit</button>
+        </div>
+    </form>
+</div>
+{% endblock body %}
