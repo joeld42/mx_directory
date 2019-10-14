@@ -20,11 +20,29 @@
         <a class="btn btn-default" href="{{ url_for( '.reportEmailList') }}"><i></i>Email List (Simple)</a>
         <a class="btn btn-default" href="{{ url_for( '.reportEmailListTsv') }}"><i></i>Email List (TSV)</a>
 
-        </div>
+    </div>
+
+
+    <div class="well">
+        <h3 class="panel-title">Add Student</h3>
+         <a class="btn btn-default" href="{{ url_for( '.formAddStudent') }}"><i></i>Add Student</a>
     </div>
 
     <div class="well">
         <h3 class="panel-title">Bulk Import</h3>
+
+        <h4>Student Data 2018</h4>
+        <p>
+        Import Student Data from 2018 TSV (tab-delimited) data.<br>
+        (2018 style with parent info)
+
+        <form method=POST enctype=multipart/form-data action="{{ url_for('.import_stu2018') }}">
+            <input type=file name=tsv>
+            <button type="submit" class="btn btn-primary">Import</button>
+        </form>
+        </p>
+
+
 
         <h4>Student Data 2017</h4>
         <p>

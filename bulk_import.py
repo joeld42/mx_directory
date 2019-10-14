@@ -32,7 +32,9 @@ TEACHER_NAME_FIX = {
 
     'Thuy-Mi Dang' : 'Dang, Mimi',
 
-    'May Lynne Gill': 'Gill, May Lynne'
+    'May Lynne Gill': 'Gill, May Lynne',
+
+    'XTeacher1, X01': 'Ransdell, Lori'
 }
 
 def importFamilyTSV( filename ):
@@ -349,19 +351,25 @@ def addGuardian( family, firstName, lastName, email, baseAddr, homePhone ):
 MULTI_G = set()
 MISSING_G = set()
 def findOrCreateGuardians( stuInfo ):
-    print "STUINFO: ", stuInfo
+    #print "STUINFO: ", stuInfo
     #fullname1  = stuInfo["primary contact name (first last)"]
     #firstName1, lastName1 = splitName( fullname1 )
     firstName1 = stuInfo["primary contact first name"]
     lastName1 = stuInfo["primary contact last name"]
-    address = stuInfo["address"]
+    #address = stuInfo["address"]
+    addressComb = stuInfo["primary contact primary address - combined"]
 
-    asplit = string.split(address,' ')
+    asplit = string.split(addressComb,' ')
     address = ' '.join( asplit[:-3])
     city = asplit[-3]
     if (city[-1]==','):
         city = city[:-1]
     zipcode = asplit[-1]
+
+    # print "DBG addComb ", addressComb
+    # print "DBG address ", address
+    # print "DBG city ", city
+    # print "DBG zipcode", zipcode
 
     phone1 = ""
     if stuInfo.has_key("primary contact phone number"):
@@ -542,8 +550,16 @@ def updateStudent( stuInfo ):
     if firstName == "Bernard":
         firstName = "Bernard "
 
-    stus = list(Student.query.filter( and_( func.lower(Student.firstname)==firstName.lower(),
-                                            func.lower(Student.lastname)==lastName.lower() )) )
+
+    stus = list(Student.query.filter( Student.student_id == stuInfo["student id"]))
+
+    # if no students match this ID, try for an exact name match
+    if (len(stus)==0):
+        stus = list(Student.query.filter( and_( func.lower(Student.firstname)==firstName.lower(),
+                                                func.lower(Student.lastname)==lastName.lower()
+                                                )) )
+                                                #Student.student_id==None )) )
+        print "NO student_id match ", firstName, lastName, " trying approx: ", len(stus)
 
     if (len(stus) > 1):
         # We don't handle this case because it doesn't come up in our 2017 dataset. Need to use
@@ -553,11 +569,12 @@ def updateStudent( stuInfo ):
         return 0
 
     if len(stus)==0:
-        print "NEED TO CREATE STUDENT ", stuInfo["grade"], stuInfo["first name"], stuInfo["last name"]
+        print "NEED TO CREATE STUDENT ", stuInfo["student id"], stuInfo["grade"], stuInfo["first name"], stuInfo["last name"]
         stus2 = list(Student.query.filter( or_( func.lower(Student.firstname)==firstName.lower(),
                                         func.lower(Student.lastname)==lastName.lower() )) )
+
         for ss in stus2:
-            print "    ? '%s' '%s' %s %s" % (ss.firstname, ss.lastname, ss.classroom.grade, ss.classroom.teacher)
+            print "    ? %s '%s' '%s' %s %s" % (ss.student_id, ss.firstname, ss.lastname, ss.classroom.grade, ss.classroom.teacher)
         createStudent( stuInfo )
     else:
         updateStudentInfo( stus[0], stuInfo )
@@ -565,6 +582,122 @@ def updateStudent( stuInfo ):
     #print "name:", firstName, lastName,  len(list(stus))
 
     return len(stus)
+
+
+
+# NOTE: column names
+# student id
+# first name
+# last name
+# current grade level
+# course short name
+# teacher
+# primary contact primary address - combined
+# primary contact first name
+# primary contact last name
+# primary contact email address
+# primary contact phone number
+def importStudentAndGuardianTSV2018( filename ):
+
+    colNum = {}
+    totalCols = 0
+
+
+    unassigned = Classroom.query.filter( Classroom.teacher == 'Unassigned')[0]
+
+    # Delete all unassigned students
+    #unstus = Student.query.filter( Student.classroom == unassigned )
+    #for stu in unstus:
+    #    print "UNSTU", stu.displayName()
+    #    if stu.firstname=='Kohta':
+    #        continue
+
+    #    db.session.delete(stu)
+    #db.session.commit()
+
+    # Remove students from Classrooms
+    for stu in Student.query.filter( Student.classroom != unassigned ):
+
+       print "unassigning ", stu, stu.firstname
+       stu.classroom = unassigned
+       db.session.commit()
+
+    notfound = {}
+    total = 0
+
+    # TODO: pull this out into a proper tsv parser
+    firstLine = True
+    for line in codecs.open( filename, 'r', 'utf-8' ):
+        lsplit = string.split( string.strip(line), '\t' )
+
+        if (firstLine):
+            print lsplit
+            totalCols = len(lsplit)
+            for cndx in range(len(lsplit)):
+                cname = lsplit[cndx].lower()
+
+                # special case some column names
+                if cname=="current grade level":
+                    cname = "grade"
+
+                print cname
+                colNum[cname] = cndx
+
+            firstLine = False
+
+        else:
+            # Replace nulls with ""
+            lsplit2 = []
+            for item in lsplit:
+                if item=='NULL':
+                    item=''
+
+                lsplit2.append(item)
+            lsplit = lsplit2
+
+            # Pad out the row
+            lsplit += [''] * (totalCols - len(lsplit))
+
+            # Mux the student into a dictionary
+            stuInfo = {}
+            for k, cndx in colNum.iteritems():
+                stuInfo[k] = lsplit[cndx]
+
+            # override some data
+            #if stuInfo["student id"] == "2007377":
+            #    stuInfo[""]
+
+            # Skip K students for the moment
+            #if stuInfo["grade"] in ['K', 'TK']:
+            #     continue
+            #if stuInfo["grade"] != '5':
+            #    continue
+
+            result = updateStudent( stuInfo )
+            if result==0:
+                notfound[stuInfo["grade"] ] = notfound.get( stuInfo["grade"], 0 ) + 1
+            total += 1
+
+
+    #print "GRADE_MISMATCH"
+    #for g in GRADE_MISMATCH:
+    #    print g
+
+    # print len(MISSING_G), "missing guardians"
+    # missg = list(MISSING_G)
+    # missg.sort()
+    # for fname in missg:
+    #     print fname
+
+    grades = notfound.keys()
+    grades.sort()
+    nftot = 0
+    for g in grades:
+        print "Not found ", g, ": ", notfound[g]
+        nftot += notfound[g]
+
+    print "Not found", nftot, "of", total, "students"
+    return "Done"
 
 
 # NOTE: column names

@@ -22,6 +22,7 @@ from model import Family, Address, Phone, Guardian, Student, Classroom, VerifyAd
 from model import db
 
 from bulk_import import importFamilyTSV, importStudentTSV, importStudentAndGuardianTSV, importStudentAndGuardianTSV2017
+from bulk_import import importStudentAndGuardianTSV2018
 
 import model
 
@@ -71,6 +72,67 @@ class HomeView(AdminIndexView):
 
         return redirect(url_for('.index'))
 
+    @expose("/add_stu", methods=['POST', 'GET'])
+    def formAddStudent(self):
+
+        msg = None
+
+        # Get list of all the classrooms
+        classrooms = Classroom.query.all()
+
+        if request.method == 'POST':
+
+            # Make an Address
+            baseAddr = Address()
+            baseAddr.address1 = request.form['guard_address']
+            baseAddr.zipcode = request.form['guard_zipcode']
+            baseAddr.city = request.form['guard_city']
+
+            if not baseAddr.city:
+                baseAddr.city = model.cityFromZip( None, baseAddr.zipcode)
+
+            db.session.add(baseAddr)
+
+            # Make a family
+            family = Family()
+            db.session.add( family )
+
+            # Make a guardian
+            guard = Guardian()
+            guard.address = baseAddr
+            guard.firstname = request.form['guard_first_name']
+            guard.lastname = request.form['guard_last_name']
+            guard.email = request.form['guard_email']
+            guard.family = family
+            db.session.add( guard )
+
+            # Make a phone number
+            phone = Phone()
+            phone.number = request.form['guard_phone']
+            phone.role = request.form['guard_phone_role']
+            phone.guardian = guard
+            db.session.add( phone )
+
+            # Finally, make the student
+            stu = Student()
+            stu.student_id = request.form['student_id']
+            stu.firstname = request.form['first_name']
+            stu.lastname = request.form['last_name']
+            class_id = int(request.form['classroom'])
+
+            stu.classroom_id = class_id
+            stu.family = family
+            db.session.add( stu )
+
+            db.session.commit()
+
+            msg = "Student `%s %s` was added." % (stu.firstname, stu.lastname )
+
+
+
+        return self.render( 'admin/form_add_student.html', msg=msg, classrooms=classrooms )
+
+
     @expose("/import_fam", methods=['POST'])
     def import_fam(self):
 
@@ -103,6 +165,18 @@ class HomeView(AdminIndexView):
             message = importStudentAndGuardianTSV( tsvUploadSet.path(filename) )
 
         return "Imported Student data...<br>" + message
+
+    @expose("/import_stu2018", methods=['POST'])
+    def import_stu2018(self):
+
+        message = "No student data uploaded..."
+
+        if request.method == 'POST' and 'tsv' in request.files:
+            filename = tsvUploadSet.save( request.files['tsv'])
+            message = importStudentAndGuardianTSV2018( tsvUploadSet.path(filename) )
+
+        return "Imported Student data...<br>" + message
+
 
     @expose("/import_stu2017", methods=['POST'])
     def import_stu2017(self):
