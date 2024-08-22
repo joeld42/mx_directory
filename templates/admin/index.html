@@ -31,6 +31,18 @@
     <div class="well">
         <h3 class="panel-title">Bulk Import</h3>
 
+
+        <h4>Student Data 2019</h4>
+        <p>
+        Import Student Data from 2019 TSV (tab-delimited) data.<br>
+        (2019 style longfellow export)
+
+        <form method=POST enctype=multipart/form-data action="{{ url_for('.import_stu2019') }}">
+            <input type=file name=tsv>
+            <button type="submit" class="btn btn-primary">Import</button>
+        </form>
+        </p>
+
         <h4>Student Data 2018</h4>
         <p>
         Import Student Data from 2018 TSV (tab-delimited) data.<br>

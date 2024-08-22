@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os, sys, string
@@ -6,9 +6,9 @@ import random
 
 from flask import request, session, redirect, url_for, Markup, Response, abort, redirect
 
-from flask.ext.admin import Admin, BaseView, expose
-from flask.ext.admin.contrib.sqla import ModelView
-from flask.ext.admin.model.template import macro
+from flask_admin import Admin, BaseView, expose
+from flask_admin.contrib.sqla import ModelView
+from flask_admin.model.template import macro
 
 import flask_uploads
 
@@ -21,12 +21,12 @@ from wtforms.fields import SelectField
 from model import Family, Address, Phone, Guardian, Student, Classroom, VerifyAddr
 from model import db
 
-from bulk_import import importFamilyTSV, importStudentTSV, importStudentAndGuardianTSV, importStudentAndGuardianTSV2017
-from bulk_import import importStudentAndGuardianTSV2018
+from bulk_import import importStudentAndGuardianTSV2019
 
 import model
 
-from flask.ext.admin import Admin, expose, AdminIndexView
+
+from flask_admin import Admin, expose, AdminIndexView
 
 from sqlalchemy import or_, and_, func
 
@@ -166,6 +166,18 @@ class HomeView(AdminIndexView):
 
         return "Imported Student data...<br>" + message
 
+    @expose("/import_stu2019", methods=['POST'])
+    def import_stu2019(self):
+
+        message = "No student data uploaded..."
+
+        if request.method == 'POST' and 'tsv' in request.files:
+            filename = tsvUploadSet.save( request.files['tsv'])
+            message = importStudentAndGuardianTSV2019( tsvUploadSet.path(filename) )
+
+        return "Imported Student data...<br>" + message
+
+
     @expose("/import_stu2018", methods=['POST'])
     def import_stu2018(self):
 
@@ -194,7 +206,7 @@ class HomeView(AdminIndexView):
         unassigned = Classroom.query.filter( Classroom.teacher == 'Unassigned')[0]
         for stu in Student.query.filter( Student.classroom != unassigned ):
             if stu.classroom is None:
-                print "No class assigned ", stu.firstname, stu.lastname
+                print ("No class assigned ", stu.firstname, stu.lastname )
                 continue
 
             if stu.family and stu.family.guardians:
@@ -305,7 +317,7 @@ class HomeView(AdminIndexView):
     @expose('/create_addr/<int:ver_id>')
     def createAddrFromVerify( self, ver_id ):
 
-        print "ver_id is ", ver_id
+        print ("ver_id is ", ver_id)
 
         verifyAddr = VerifyAddr.query.get( ver_id )
         if not verifyAddr:

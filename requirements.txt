@@ -6,8 +6,8 @@ fpdf==1.7.2
 fuzzywuzzy==0.11.1
 itsdangerous==0.24
 Jinja2==2.7.3
-Markdown==2.5.2
-MarkupSafe==0.23
+Markdown>=2.5.2
+MarkupSafe>=0.23
 requests==2.5.1
 SQLAlchemy==0.9.8
 Werkzeug==0.9.6

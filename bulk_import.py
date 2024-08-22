@@ -6,7 +6,8 @@ import random
 import codecs
 
 
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
+#from flask.ext.sqlalchemy import SQLAlchemy
 #from flask.ext.sqlalchemy.orm import backref, relationship
 
 from sqlalchemy import or_, and_
@@ -17,24 +18,86 @@ from model import Family, Address, Phone, Guardian, Student, Classroom, VerifyAd
 from model import db
 
 # Use this to override names for different names or dual classes
+class ColumnName:
+    studentID = "student id"
+    teacher = "teacher"
+    gradelevel = "grade"
+    firstname = "first name"
+    lastname = "last name"
+    address = "street"
+    zipcode = "zip"
+    contact_firstname = "contacts_firstname"
+    contact_lastname = "contacts_lastname"
+
+    contact_address = "contacts_addressline1"
+    contact_city = "contacts_city"
+    contact_state = "contacts_state"
+    contact_zip = "contacts_zip"
+    contact_email =  "contacts_email"
+
+    contact_homephone = "contacts_homephone"
+    contact_workphone ="contacts_workphone"
+    contact_cellphone ="contacts_cellphone"
+
+
+# All lowercase even if the remapped names are mixed case
+TSV_CNAME_MAPPING = {
+    "student_studentnumber" : ColumnName.studentID,
+    "student_firstname" : ColumnName.firstname,
+    "student_lastname" : ColumnName.lastname,
+    "student_homeroomteacher" : ColumnName.teacher,
+    #"coursesection_coursename" : "",
+    "student_grade" : ColumnName.gradelevel,
+    "coursesection_teacherfullname" : ColumnName.teacher,
+
+    "address_guardianfirstname" : ColumnName.contact_firstname,
+    "address_guardianlastname" : ColumnName.contact_lastname,
+    "address_addressline1" : ColumnName.contact_address,
+    "address_city" : ColumnName.contact_city,
+    "address_state" : ColumnName.contact_state,
+    "address_zip" : ColumnName.contact_zip,    
+    # "contacts_firstname" : "",
+    # "contacts_lastname" : "",
+    # "contacts_addressline1" : "",
+    # "contacts_city" : "",
+    # "contacts_state" : "",
+    # "contacts_zip" : "",
+    # "contacts_homephone" : "",
+    # "contacts_workphone" : "",
+    # "contacts_cellphone" : "",
+
+}
 
 TEACHER_NAME_FIX = {
 
     'Inthedatafile Name' : 'Name, Inthedatafile',
+    #
+    # 'Attilah Reese': 'Rainey, Attilah',
+    # 'Annastazia Manekin-Hrdy' : 'Cobeen, Richard; Manekin-Hrdy, Zia',
+    # 'Richard Cobeen' : 'Cobeen, Richard; Manekin-Hrdy, Zia',
+    #
+    # 'Jila Abdolhosseini' : 'Beers, Julia; Abdolhosseini, Jila',
+    # 'Julia Beers' : 'Beers, Julia; Abdolhosseini, Jila',
+    #
+    #'Dang, Thuy-Mi' : 'Hunter, Thuy-Mi',
+    'Reese, Attilah' : 'Rainey, Attilah',
+    'McDaniels, Lachelle' : 'McDaniels, LaChelle',
 
-    'Attilah Reese': 'Rainey, Attilah',
+    # Rewrite co-teachers as combined names
+    # 'Abdolhosseini, Jila' : 'Abdolhosseini, Jila and Arroyo, Jessica',
+    # 'Arroyo Solis, Jessica' : 'Abdolhosseini, Jila and Arroyo, Jessica',
 
-    'Annastazia Manekin-Hrdy' : 'Cobeen, Richard; Manekin-Hrdy, Zia',
-    'Richard Cobeen' : 'Cobeen, Richard; Manekin-Hrdy, Zia',
+    # TK Classes not assigned yet
+    'Dang, Thuy-Mi' : 'TK Combined',
+    'Cottle, Amy' : 'TK Combined',
+    'Gill, May Lynne' : 'TK Combined',
 
-    'Jila Abdolhosseini' : 'Beers, Julia; Abdolhosseini, Jila',
-    'Julia Beers' : 'Beers, Julia; Abdolhosseini, Jila',
+    # 'Fletcher, Michele': 'Fletcher, Michele and Allman, Cynthia',
+    # 'Allman, Cynthia': 'Fletcher, Michele and Allman, Cynthia',
 
-    'Thuy-Mi Dang' : 'Dang, Mimi',
+    'Cobeen, Richard' : 'Cobeen, Richard and Middleton Fraser, Suzanne',
+    'Middleton Fraser, Suzanne' : 'Cobeen, Richard and Middleton Fraser, Suzanne',
 
-    'May Lynne Gill': 'Gill, May Lynne',
-
-    'XTeacher1, X01': 'Ransdell, Lori'
 }
 
 def importFamilyTSV( filename ):
@@ -83,16 +146,16 @@ def importFamilyTSV( filename ):
             zip_from_tsv = lsplit[colNum['zip_from_tsv']]
 
             if not street_from_tsv:
-                print "MISSING MATCHADDR", line
+                print( "MISSING MATCHADDR", line )
                 continue
 
             family = Family()
             family.matchAddr = street_from_tsv
 
-            print "---- Family ", family
+            print ( "---- Family ", family )
 
             countAddr += 1
-            print "***", street_from_tsv
+            print ( "***", street_from_tsv )
 
             # Use the street_from_tsv as a base address
             baseAddr = Address()
@@ -101,7 +164,7 @@ def importFamilyTSV( filename ):
             baseAddr.city = model.cityFromZip( None, zip_from_tsv)
             #db.session.add( baseAddr )
             #db.session.commit()
-            print "ADDING BASEADDR", baseAddr, baseAddr.address1
+            print ("ADDING BASEADDR", baseAddr, baseAddr.address1 )
 
             defaultAddr = None
 
@@ -132,7 +195,7 @@ def importFamilyTSV( filename ):
 
                     countParents += 1
 
-                    print "Import parent ", i, firstname, lastname
+                    print ( "Import parent ", i, firstname, lastname )
 
                     # Add phones
                     for role, phonenum in [('Home', homephone), ('Work', workphone), ('Cell', cellphone)]:
@@ -148,7 +211,7 @@ def importFamilyTSV( filename ):
                         # match the base?
                         street = model.normalizeAddress(street)
                         if (street == baseAddr.address1) and (zipcode == baseAddr.zipcode):
-                            print "GUARDIAN USES BASE ADDR", baseAddr
+                            print ( "GUARDIAN USES BASE ADDR", baseAddr )
                             parent.address = baseAddr
                         else:
                             addr = Address()
@@ -158,12 +221,12 @@ def importFamilyTSV( filename ):
 
                             parent.address = addr
                             db.session.add( addr )
-                            print "ADDING GUARDIAN ADDR", addr
+                            print ( "ADDING GUARDIAN ADDR", addr )
 
                         if not defaultAddr:
                             defaultAddr = parent.address
                     else:
-                        print "NO ADDR USING DEFAULT"
+                        print ("NO ADDR USING DEFAULT" )
                         if defaultAddr:
                             parent.address = defaultAddr
                         else:
@@ -176,7 +239,7 @@ def importFamilyTSV( filename ):
             # for this address
             if (numGuardians==0):
 
-                print "NO GUARDIANS ADDING EMPTY", baseAddr
+                print ("NO GUARDIANS ADDING EMPTY", baseAddr )
 
                 parent = Guardian()
                 parent.address = baseAddr
@@ -220,7 +283,7 @@ def importStudentTSV( filename ):
         #     break;
 
         if (firstLine):
-            print lsplit
+            print ( lsplit )
             totalCols = len(lsplit)
             for cndx in range(len(lsplit)):
                 cname = lsplit[cndx]
@@ -240,12 +303,12 @@ def importStudentTSV( filename ):
             # Pad out the row
             lsplit += [''] * (totalCols - len(lsplit))
 
-            firstname = lsplit[ colNum[ "first_name" ] ]
-            lastname = lsplit[ colNum[ "last_name" ]]
-            matchAddr = lsplit[ colNum[ "street" ]]
-            zipcode = lsplit[ colNum[ "zip" ]]
-            grade = lsplit[ colNum[ "grade" ]]
-            teacher = lsplit[ colNum[ "teacher" ]]
+            firstname = lsplit[ colNum[ ColumnName.firstname ] ]
+            lastname = lsplit[ colNum[ ColumnName.lastname ]]
+            matchAddr = lsplit[ colNum[ColumnName.address ]]
+            zipcode = lsplit[ colNum[ ColumnName.zipcode ]]
+            grade = lsplit[ colNum[ ColumnName.gradelevel ]]
+            teacher = lsplit[ colNum[ ColumnName.teacher ]]
 
             student = Student()
             student.firstname = firstname
@@ -254,7 +317,7 @@ def importStudentTSV( filename ):
 
             matchAddr = model.normalizeAddress(matchAddr)
 
-            print "targetAddr is ",matchAddr, zipcode
+            print ( "targetAddr is ",matchAddr, zipcode )
 
             # Query any address from their matchAddr
             family = None
@@ -262,18 +325,18 @@ def importStudentTSV( filename ):
                                                 	(Address.zipcode==zipcode)) ).first()
 
             if not address:
-                print "No exact match, trying without zip"
+                print ( "No exact match, trying without zip" )
                 # didn't find an exact match, first without the zipcode
                 address = Address.query.filter( Address.address1==matchAddr).first()
 
                 if address:
                      # Fix the zip code if it's missing
                      if not address.zipcode:
-                         print "fixing zip"
+                         print ( "fixing zip" )
                          address.zipcode = student.zipcode
                          db.session.commit()
                      else:
-                         print "Mismatched zip codes:", matchAddr, address.zipcode, student.zipcode, "for student", firstname, lastname
+                         print ( "Mismatched zip codes:", matchAddr, address.zipcode, student.zipcode, "for student", firstname, lastname )
 
 
             if address:
@@ -284,7 +347,7 @@ def importStudentTSV( filename ):
                         break
 
                 if not family:
-                    print "Didn't find guardian for address", address
+                    print ( "Didn't find guardian for address", address )
 
             else:
 
@@ -330,7 +393,7 @@ def fixPhone( phone ):
     else:
         return phone
 
-def addGuardian( family, firstName, lastName, email, baseAddr, homePhone ):
+def addGuardian( family, firstName, lastName, email, baseAddr, phones ):
 
     parent = Guardian()
     parent.firstname = firstName
@@ -341,11 +404,11 @@ def addGuardian( family, firstName, lastName, email, baseAddr, homePhone ):
     parent.family = family
     db.session.add(parent)
 
-    if homePhone:
+    for phoneKey, phoneNum in phones:
         phone = Phone()
-        phone.number = homePhone
+        phone.number = phoneNum
         phone.guardian = parent
-        phone.role = 'Home'
+        phone.role = phoneKey
         db.session.add(phone)
 
 MULTI_G = set()
@@ -354,28 +417,32 @@ def findOrCreateGuardians( stuInfo ):
     #print "STUINFO: ", stuInfo
     #fullname1  = stuInfo["primary contact name (first last)"]
     #firstName1, lastName1 = splitName( fullname1 )
-    firstName1 = stuInfo["primary contact first name"]
-    lastName1 = stuInfo["primary contact last name"]
-    #address = stuInfo["address"]
-    addressComb = stuInfo["primary contact primary address - combined"]
+    firstName1 = stuInfo[ ColumnName.contact_firstname ]
+    lastName1 = stuInfo[ ColumnName.contact_lastname ]
+    address = stuInfo[ ColumnName.contact_address]
+    city = stuInfo[ ColumnName.contact_city ]
+    zipcode = stuInfo[ ColumnName.contact_zip ]
 
-    asplit = string.split(addressComb,' ')
-    address = ' '.join( asplit[:-3])
-    city = asplit[-3]
-    if (city[-1]==','):
-        city = city[:-1]
-    zipcode = asplit[-1]
 
     # print "DBG addComb ", addressComb
     # print "DBG address ", address
     # print "DBG city ", city
     # print "DBG zipcode", zipcode
 
-    phone1 = ""
-    if stuInfo.has_key("primary contact phone number"):
-        phone1 = fixPhone( stuInfo["primary contact phone number"] )
+    # phone1 = ""
+    # if stuInfo.has_key("primary contact phone number"):
+    #     phone1 = fixPhone( stuInfo["primary contact phone number"] )
+    allPhones = []
 
-    email1= stuInfo["primary contact email address"]
+    for role, phoneCol in [ ('Work', ColumnName.contact_workphone),
+                            ('Home', ColumnName.contact_homephone),
+                            ('Cell', ColumnName.contact_cellphone) ]:
+
+        phone = stuInfo.get( phoneCol, "" )
+        if phone:
+            allPhones.append( ( role, phone ))
+
+    email1= stuInfo[ ColumnName.contact_email ]
     if email1=='':
         # dummy email so it won't match anything
         searchEmail1 = "No EMail!!"
@@ -395,9 +462,9 @@ def findOrCreateGuardians( stuInfo ):
                                                   Guardian.email==searchEmail1 ) )
     guardian1 = list( guardian1 )
     if (len(guardian1)>1):
-        print ">>>> MULTIPLE GUARDIAN ", firstName1, lastName1, email1, len(guardian1)
+        print (">>>> MULTIPLE GUARDIAN ", firstName1, lastName1, email1, len(guardian1) )
         for gg in guardian1:
-            print gg.id, gg.displayName(), gg.email
+            print (gg.id, gg.displayName(), gg.email)
 
     # Found a guardian, return the fam
     if len(guardian1)>0:
@@ -431,7 +498,7 @@ def findOrCreateGuardians( stuInfo ):
     db.session.add(family)
 
     #def addGuardian( family, firstName, lastName, email, baseAddr, homePhone ):
-    addGuardian( family, firstName1, lastName1, email1, baseAddr, phone1 )
+    addGuardian( family, firstName1, lastName1, email1, baseAddr, allPhones )
 
     #if (firstName2 and lastName2):
     #    addGuardian( family, firstName2, lastName2, email2, baseAddr, phone1 )
@@ -441,12 +508,21 @@ def findOrCreateGuardians( stuInfo ):
 
 def findOrCreateTeacherForStudent( stuInfo ):
 
-    teacherName = fixTeacherName( stuInfo["teacher"] )
+    teacherName = fixTeacherName( stuInfo[ ColumnName.teacher ] )
+
     teacher = list(Classroom.query.filter( Classroom.teacher == teacherName ))
     if len(teacher)==0:
-        print "COULD NOT FIND TEACHER '%s' (%s)" % ( stuInfo["teacher"], teacherName )
+        print ( "COULD NOT FIND TEACHER '%s' (%s)" % ( stuInfo[ ColumnName.teacher ], teacherName ) )
 
-        newClass = Classroom( teacher = teacherName, grade = stuInfo["grade"] )
+        # Sanitize grade level (e.g. 01 - 1)
+        gradeLevel = stuInfo[ColumnName.gradelevel]
+        try:
+            gradeLevel = int(gradeLevel)
+        except ValueError:
+            pass
+
+        newClass = Classroom( teacher = teacherName, grade = gradeLevel )
+
         db.session.add( newClass )
         db.session.commit()
 
@@ -459,8 +535,8 @@ def findOrCreateTeacherForStudent( stuInfo ):
 
 def createStudent( stuInfo ):
 
-    firstName = stuInfo["first name"]
-    lastName = stuInfo ["last name"]
+    firstName = stuInfo[ColumnName.firstname]
+    lastName = stuInfo [ColumnName.lastname]
 
     # teacherName = fixTeacherName( stuInfo["teacher"] )
     # teacher = list(Classroom.query.filter( Classroom.teacher == teacherName ))
@@ -479,27 +555,28 @@ def createStudent( stuInfo ):
     # Find family, or make new entry
     fam = findOrCreateGuardians( stuInfo )
 
-    print "Create Student:", firstName, lastName
+    print ("Create Student:", firstName, lastName )
     student = Student()
     student.firstname = firstName
     student.lastname = lastName
 
     student.family = fam
     student.classroom = teacher
-    student.student_id = stuInfo["student id"]
+    student.student_id = stuInfo[ ColumnName.studentID ]
 
     db.session.add( student )
     db.session.commit()
 
 def fixTeacherName( rawName ):
 
-    if TEACHER_NAME_FIX.has_key( rawName ):
+    if rawName in TEACHER_NAME_FIX:
         return TEACHER_NAME_FIX[ rawName ]
 
     # otherwise, flip Last, First
     # NOTE: 2018 Data has this as Last,First
     #namesplit = string.split( rawName, ' ' )
     #fixName = ' '.join(namesplit[1:]) + ', ' + namesplit[0]
+    # 2021 data has this matching
 
     return rawName
 
@@ -523,7 +600,7 @@ def updateStudentInfo( stu, stuInfo ):
 
     # Assign the student
     stu.classroom = teacher
-    stu.student_id = stuInfo["student id"]
+    stu.student_id = stuInfo[ ColumnName.studentID ]
     db.session.commit()
 
     # # Update the teacher's grade if it doesn't match the ledger
@@ -543,15 +620,10 @@ def updateStudentInfo( stu, stuInfo ):
 def updateStudent( stuInfo ):
     #print "Update Student " + str(stuInfo)
 
-    firstName = stuInfo["first name"]
-    lastName = stuInfo ["last name"]
+    firstName = stuInfo[ ColumnName.firstname ]
+    lastName = stuInfo [ ColumnName.lastname ]
 
-    # HACK
-    if firstName == "Bernard":
-        firstName = "Bernard "
-
-
-    stus = list(Student.query.filter( Student.student_id == stuInfo["student id"]))
+    stus = list(Student.query.filter( Student.student_id == stuInfo[ ColumnName.studentID ]))
 
     # if no students match this ID, try for an exact name match
     if (len(stus)==0):
@@ -559,24 +631,27 @@ def updateStudent( stuInfo ):
                                                 func.lower(Student.lastname)==lastName.lower()
                                                 )) )
                                                 #Student.student_id==None )) )
-        print "NO student_id match ", firstName, lastName, " trying approx: ", len(stus)
+        print ("NO student_id match ", firstName, lastName, " trying approx: ", len(stus) )
 
     if (len(stus) > 1):
         # We don't handle this case because it doesn't come up in our 2017 dataset. Need to use
         # other fields to differentiate if it happens.
-        print "ERROR: Found multiple students matching name ", firstName, lastName
+        print ( "ERROR: Found multiple students matching name ", firstName, lastName )
         #assert( False )
         return 0
 
     if len(stus)==0:
-        print "NEED TO CREATE STUDENT ", stuInfo["student id"], stuInfo["grade"], stuInfo["first name"], stuInfo["last name"]
+        print ( "NEED TO CREATE STUDENT ", stuInfo[ColumnName.studentID],
+                stuInfo[ ColumnName.gradelevel], stuInfo[ ColumnName.firstname], stuInfo[ ColumnName.lastname ] )
+
         stus2 = list(Student.query.filter( or_( func.lower(Student.firstname)==firstName.lower(),
                                         func.lower(Student.lastname)==lastName.lower() )) )
 
         for ss in stus2:
-            print "    ? %s '%s' '%s' %s %s" % (ss.student_id, ss.firstname, ss.lastname, ss.classroom.grade, ss.classroom.teacher)
+            print ( "    ? %s '%s' '%s' %s %s" % (ss.student_id, ss.firstname, ss.lastname, ss.classroom.grade, ss.classroom.teacher) )
         createStudent( stuInfo )
     else:
+        print( "FOUND Student", stuInfo[ColumnName.studentID], stuInfo[ColumnName.firstname], stuInfo[ColumnName.lastname] )
         updateStudentInfo( stus[0], stuInfo )
 
     #print "name:", firstName, lastName,  len(list(stus))
@@ -584,20 +659,18 @@ def updateStudent( stuInfo ):
     return len(stus)
 
 
-
 # NOTE: column names
-# student id
 # first name
 # last name
-# current grade level
+# grade
 # course short name
 # teacher
-# primary contact primary address - combined
 # primary contact first name
 # primary contact last name
 # primary contact email address
 # primary contact phone number
-def importStudentAndGuardianTSV2018( filename ):
+# HEREHERE
+def importStudentAndGuardianTSV2019( filename ):
 
     colNum = {}
     totalCols = 0
@@ -618,7 +691,7 @@ def importStudentAndGuardianTSV2018( filename ):
     # Remove students from Classrooms
     for stu in Student.query.filter( Student.classroom != unassigned ):
 
-       print "unassigning ", stu, stu.firstname
+       print ("unassigning ", stu, stu.firstname)
        stu.classroom = unassigned
        db.session.commit()
 
@@ -626,21 +699,21 @@ def importStudentAndGuardianTSV2018( filename ):
     total = 0
 
     # TODO: pull this out into a proper tsv parser
+    count = 0
     firstLine = True
     for line in codecs.open( filename, 'r', 'utf-8' ):
-        lsplit = string.split( string.strip(line), '\t' )
+        lsplit = line.strip().split('\t' )
 
         if (firstLine):
-            print lsplit
+            print (lsplit )
             totalCols = len(lsplit)
             for cndx in range(len(lsplit)):
                 cname = lsplit[cndx].lower()
 
                 # special case some column names
-                if cname=="current grade level":
-                    cname = "grade"
+                cname = TSV_CNAME_MAPPING.get( cname, cname )
 
-                print cname
+                print ( f"COLNAME {cname}" )
                 colNum[cname] = cndx
 
             firstLine = False
@@ -660,28 +733,34 @@ def importStudentAndGuardianTSV2018( filename ):
 
             # Mux the student into a dictionary
             stuInfo = {}
-            for k, cndx in colNum.iteritems():
+
+            # generate a random student id
+            stuInfo[ ColumnName.studentID] = str(10000 + count)
+            count += 1
+
+            for k, cndx in colNum.items():
                 stuInfo[k] = lsplit[cndx]
 
-            # override some data
-            #if stuInfo["student id"] == "2007377":
-            #    stuInfo[""]
+            print("STUINFO:", stuInfo )
 
-            # Skip K students for the moment
-            #if stuInfo["grade"] in ['K', 'TK']:
-            #     continue
-            #if stuInfo["grade"] != '5':
-            #    continue
+            # fix teacher name
+            teacher = stuInfo[ ColumnName.teacher ]
+            teacher = teacher.replace(u'“',u'').replace(u'”',u'').replace(u'"',u'')
+            teacher = teacher.strip()
+            stuInfo[ ColumnName.teacher ] = teacher
 
             result = updateStudent( stuInfo )
             if result==0:
-                notfound[stuInfo["grade"] ] = notfound.get( stuInfo["grade"], 0 ) + 1
+                notfound[stuInfo[ColumnName.gradelevel] ] = notfound.get( stuInfo[ColumnName.gradelevel], 0 ) + 1
             total += 1
 
 
-    #print "GRADE_MISMATCH"
-    #for g in GRADE_MISMATCH:
-    #    print g
+
+    #return "zzz"
+
+    print ("GRADE_MISMATCH")
+    for g in GRADE_MISMATCH:
+        print(g)
 
     # print len(MISSING_G), "missing guardians"
     # missg = list(MISSING_G)
@@ -689,288 +768,15 @@ def importStudentAndGuardianTSV2018( filename ):
     # for fname in missg:
     #     print fname
 
-    grades = notfound.keys()
+    grades = list(notfound.keys())
     grades.sort()
     nftot = 0
     for g in grades:
-        print "Not found ", g, ": ", notfound[g]
+        print ("Not found ", g, ": ", notfound[g] )
         nftot += notfound[g]
 
-    print "Not found", nftot, "of", total, "students"
+    print ("Not found", nftot, "of", total, "students")
     return "Done"
 
 
-# NOTE: column names
-# student id
-# first name
-# last name
-# class
-# grade level
-# teacher
-# primary contact name (first last)
-# primary contact primary address - combined
-# primary contact phone number
-# primary contact email address
-# contact name (first last)
-# contact email address
-# phone number
-
-def importStudentAndGuardianTSV2017( filename ):
-
-    colNum = {}
-    totalCols = 0
-
-
-    unassigned = Classroom.query.filter( Classroom.teacher == 'Unassigned')[0]
-
-    # Delete all unassigned students
-    #unstus = Student.query.filter( Student.classroom == unassigned )
-    #for stu in unstus:
-    #    print "UNSTU", stu.displayName()
-    #    if stu.firstname=='Kohta':
-    #        continue
-
-    #    db.session.delete(stu)
-    #db.session.commit()
-
-    # Remove students from Classrooms
-    #for stu in Student.query.filter( Student.classroom != unassigned ):
-
-    #    print "unassigning ", stu, stu.firstname
-    #    stu.classroom = unassigned
-    #    db.session.commit()
-
-    notfound = {}
-    total = 0
-
-    # TODO: pull this out into a proper tsv parser
-    firstLine = True
-    for line in codecs.open( filename, 'r', 'utf-8' ):
-        lsplit = string.split( string.strip(line), '\t' )
-
-        if (firstLine):
-            print lsplit
-            totalCols = len(lsplit)
-            for cndx in range(len(lsplit)):
-                cname = lsplit[cndx].lower()
-                print cname
-                colNum[cname] = cndx
-
-            firstLine = False
-
-        else:
-            # Replace nulls with ""
-            lsplit2 = []
-            for item in lsplit:
-                if item=='NULL':
-                    item=''
-
-                lsplit2.append(item)
-            lsplit = lsplit2
-
-            # Pad out the row
-            lsplit += [''] * (totalCols - len(lsplit))
-
-            # Mux the student into a dictionary
-            stuInfo = {}
-            for k, cndx in colNum.iteritems():
-                stuInfo[k] = lsplit[cndx]
-
-            # Skip K students for the moment
-            if not stuInfo["grade"] in ['K', 'TK']:
-                continue
-
-            result = updateStudent( stuInfo )
-            if result==0:
-                notfound[stuInfo["grade"] ] = notfound.get( stuInfo["grade"], 0 ) + 1
-            total += 1
-
-
-    #print "GRADE_MISMATCH"
-    #for g in GRADE_MISMATCH:
-    #    print g
-
-    # print len(MISSING_G), "missing guardians"
-    # missg = list(MISSING_G)
-    # missg.sort()
-    # for fname in missg:
-    #     print fname
-
-    grades = notfound.keys()
-    grades.sort()
-    nftot = 0
-    for g in grades:
-        print "Not found ", g, ": ", notfound[g]
-        nftot += notfound[g]
-
-    print "Not found", nftot, "of", total, "students"
-    return "Done"
-
-
-
-def importStudentAndGuardianTSV( filename ):
-
-    stuCount = 0
-
-    colNum = {}
-    totalCols = 0
-
-    needVerify = 0
-
-    firstLine = True
-    for line in codecs.open( filename, 'r', 'utf-8' ):
-        lsplit = string.split( string.strip(line), '\t' )
-
-        # if stuCount == 5:
-        #     break
-
-        if (firstLine):
-            print lsplit
-            totalCols = len(lsplit)
-            for cndx in range(len(lsplit)):
-                cname = lsplit[cndx].lower()
-                print cname
-                colNum[cname] = cndx
-
-            firstLine = False
-
-        else:
-            # Replace nulls with ""
-            lsplit2 = []
-            for item in lsplit:
-                if item=='NULL':
-                    item=''
-
-                lsplit2.append(item)
-            lsplit = lsplit2
-
-            # Pad out the row
-            lsplit += [''] * (totalCols - len(lsplit))
-
-            firstname = lsplit[ colNum[ "first name" ] ]
-            lastname = lsplit[ colNum[ "last name" ]]
-            matchAddr = lsplit[ colNum[ "mailing address" ]]
-            city = lsplit[ colNum["city"]]
-            zipcode = lsplit[ colNum[ "zip" ]]
-            grade = lsplit[ colNum[ "grade" ]]
-            sid = lsplit[ colNum[ "student id"]]
-            if (grade=='0'):
-                grade = 'K'
-            room = lsplit[ colNum[ "room" ]]
-            teacher = lsplit[ colNum[ "teacher" ]]
-
-            # NOTE use StudentID for this in 2019, since we're storing it now
-
-            # see if we can find the student in the db already
-            stu = Student.query( )
-
-    def addStudentFromTSVInfo( firstname, lastname, etc ):
-
-        student = Student()
-        student.firstname = firstname
-        student.lastname = lastname
-
-        matchAddr = model.normalizeAddress(matchAddr)
-        print "targetAddr is ",matchAddr, zipcode
-
-        # Query any address from their matchAddr
-        # family = None
-        # address = Address.query.filter( and_( (Address.address1==matchAddr),
-        #                                     	(Address.zipcode==zipcode)) ).first()
-
-        family = Family.query.filter( Family.matchAddr == matchAddr ).first()
-
-        if not family:
-            print "No exact match, trying address"
-            # didn't find an exact match, first without the zipcode
-            address = Address.query.filter( Address.address1==matchAddr).first()
-
-            if address:
-                # Fix the zip code if it's missing
-                if not address.zipcode:
-                     print "fixing zip"
-                     address.zipcode = zipcode
-
-                for g in address.guardians:
-                    if g.family:
-                        family = g.family
-                        break
-
-                if not family:
-                    # Shouldn't happen, orphaned address
-                    print "Didn't find guardian for address", address
-
-        if not family:
-
-            # Create a new Family entry from the imported contact info
-            # Use the street_from_tsv as a base address
-            baseAddr = Address()
-            baseAddr.address1 = matchAddr
-            baseAddr.zipcode = zipcode
-            baseAddr.city = model.cityFromZip( None, zipcode)
-            db.session.add(baseAddr)
-
-            homePhone = lsplit[ colNum[ "home phone" ]]
-            guardianInfo = [ ( lsplit[ colNum[ "mother" ]],
-                               lsplit[ colNum[ "mother email" ]] ),
-                             ( lsplit[ colNum[ "father" ]],
-                               lsplit[ colNum[ "father email" ]] ) ]
-            for name, email in guardianInfo:
-                if name:
-                    if name.find(',') != -1:
-                        lastname, firstname = string.split(name, ',')
-                    else:
-                        nsplit = string.split(name)
-                        firstname = ' '.join(nsplit[:-1])
-                        lastname = nsplit[-1]
-
-                    if not family:
-                        family = Family()
-                        family.matchAddr = matchAddr
-                        db.session.add(family)
-
-                    parent = Guardian()
-                    parent.firstname = firstname
-                    parent.lastname = lastname
-                    parent.email = email
-                    parent.address = baseAddr
-
-                    parent.family = family
-                    db.session.add(parent)
-
-                    if homePhone:
-                        phone = Phone()
-                        phone.number = homePhone
-                        phone.guardian = parent
-                        phone.role = 'Home'
-                        db.session.add(phone)
-
-
-            # If not an (incoming) K student, flag for verification
-            if True or grade != 'K':
-
-                verify = VerifyAddr()
-                verify.matchAddr = matchAddr
-                verify.zipcode = zipcode
-                verify.student = student
-                db.session.add( verify )
-
-                needVerify += 1
-
-        if family:
-            student.family = family
-
-        # query for their classroom
-        room = Classroom.query.filter( and_((Classroom.teacher==teacher),
-                                                 (Classroom.grade==grade))).first()
-        if not room:
-            room = Classroom()
-            room.teacher = teacher
-            room.grade = grade
-
-            db.session.add( room )
-
-        student.classroom = room
-
-        db.session.add(student)
 

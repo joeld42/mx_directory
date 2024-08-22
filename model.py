@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/env python3
 # -*- coding: utf-8 -*-
 
 import string
@@ -6,7 +6,8 @@ import string
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
+#from flask.ext.sqlalchemy import SQLAlchemy
 #from flask.ext.sqlalchemy.orm import backref, relationship
 
 from sqlalchemy import or_, and_
@@ -38,14 +39,14 @@ ZIPCODES = { 'Albany': ['94706'],
              'Piedmont': ['94620'] }
 
 ZIPCODES_FLIP = {}
-for k, vals in ZIPCODES.iteritems():
+for k, vals in ZIPCODES.items():
     for v in vals:
         ZIPCODES_FLIP[v] = k
 
 
 # Flip the addr norms list
 ADDR_NORMS_REPL = {}
-for k, vals in ADDR_NORMS.iteritems():
+for k, vals in ADDR_NORMS.items():
     for v in vals:
         ADDR_NORMS_REPL[v] = k
 
@@ -77,16 +78,16 @@ def cityFromZip( origCity, zipcode ):
     if not zipcode:
         return origCity
 
-    print "Lookup zip '%s' (%s)" % (zipcode, origCity)
+    print (f"Lookup zip {zipcode}, ({origCity})")
 
     # Echo city back if specified, this is just so we
     # can call this without checking if city is specified
     if origCity:
-        print " -> unchanged", origCity
+        print (" -> unchanged", origCity)
         return origCity
 
     # Check for east bay zip codes
-    print " -> ", ZIPCODES_FLIP.get( zipcode, None )
+    print(" -> ", ZIPCODES_FLIP.get( zipcode, None ) )
     return ZIPCODES_FLIP.get( zipcode, None )
 
 class Address( db.Model ):
@@ -224,10 +225,10 @@ class Guardian( db.Model ):
         use_id = 0
         if self.id:
             use_id = self.id
-        return ('%s %s [#%d]' % (self.firstname, self.lastname, use_id )).encode('ascii', 'replace')
+        return ('%s %s [#%d]' % (self.firstname, self.lastname, use_id ))
 
     def displayName(self):
-        return ('%s %s' % (self.firstname, self.lastname )).encode('utf8')
+        return ('%s %s' % (self.firstname, self.lastname ))
 
     def duplicate( self ):
 
@@ -267,10 +268,10 @@ class Student( db.Model ):
 
 
     def __repr__(self):
-        return ('%s %s' % (self.firstname, self.lastname )).encode('ascii', 'replace')
+        return (u'%s %s' % (self.firstname, self.lastname ))
 
     def displayName(self):
-        return ('%s %s' % (self.firstname, self.lastname )).encode('utf8')
+        return (u'%s %s' % (self.firstname, self.lastname ))
 
     def needsVerify(self):
         if self.verifyAddr or not self.family:
@@ -298,6 +299,11 @@ class Classroom( db.Model ):
         classfams.sort( key=lambda f: f.students[0].firstname or "" )
 
         return classfams
+
+    def numStudents(self):
+
+        stus = list(self.students)
+        return len(stus)
 
     def __repr__(self):
         return '%s (%s)' % (self.teacher, self.grade );

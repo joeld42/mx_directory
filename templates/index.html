@@ -17,8 +17,15 @@
             <div class="col-md-4">
                 <h2>Grade {{ grade }}</h2>
                 {% for cc in classesForGrade[grade] %}
-                <a href="{{ url_for('classroom', cc_id=cc.id ) }}">
-                    {{ cc.teacher }}</a><br>
+                    {%  with numstu = cc.numStudents() %}
+                        {%  if numstu %}
+                        <a href="{{ url_for('classroom', cc_id=cc.id ) }}">
+                            {{ cc.teacher }} ({{ numstu }}) </a><br>
+                        {%  else %}
+                            <a href="{{ url_for('classroom', cc_id=cc.id ) }}"><b>
+                                {{ cc.teacher }} ({{ numstu }})</b>!</a><br>
+                        {%  endif %}
+                    {%  endwith %}
                 {% endfor %}
             </div>
         {% endif %}

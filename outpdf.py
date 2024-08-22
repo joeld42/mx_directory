@@ -37,7 +37,7 @@ class MXDirectoryPDF(FPDF):
         if classSheetMode:
             self.numCols = 1
         else:
-            self.numCols = 4
+            self.numCols = 2
 
         self.currCol = 0
 
@@ -49,6 +49,10 @@ class MXDirectoryPDF(FPDF):
         self.colWidth = self.calcColWidth( self.numCols )
 
         self.gradeAbbr = { '1' : '1st', '2' : '2nd', '3' : '3rd', '4' : '4th', '5' : '5th'}
+
+        # use this to offset the first page number
+        self.page_start = 0
+
 
     def calcColWidth(self, numCols):
         return int((self.w - ((self.l_margin+self.r_margin) + (self.colSpc * (numCols-1))) ) / numCols)
@@ -86,7 +90,7 @@ class MXDirectoryPDF(FPDF):
             # # self.ln(4)
             # self.cell( 0, 10, 'you do not want included in the directory. Use the space provided to indicate any corrections or additional contacts.')
 
-            inst = string.split( string.strip(INSTRUCTIONS), '\n')
+            inst = INSTRUCTIONS.strip().split( '\n')
             inst = ' '.join( inst )
             inst = inst.replace( '<br>', '\n\n' )
 
@@ -99,17 +103,27 @@ class MXDirectoryPDF(FPDF):
             # Directory Mode, just page number
             self.set_y(-10)
             self.set_font('Arial', 'I', 10 )
-            self.cell(0, 10, str(self.page_no()), 0, 0, 'C')
+            self.cell(0, 10, str(self.page_no() + self.page_start), 0, 0, 'C')
 
 
     def startClass(self, classroom ):
+
+        print ("'%s'" % classroom.teacher)
+
+        # Override class to have 3 columns
+        if classroom.teacher == 'Patterson, Mary':
+            self.numCols = 3
+        else:
+            self.numCols = 2
+
+        self.colWidth = self.calcColWidth( self.numCols )
 
         self.currClass = '%s - Grade %s' % (classroom.teacher, classroom.grade)
         self.currClassShort = '%s %s' % (classroom.teacher.split()[0], self.gradeAbbr.get( classroom.grade, classroom.grade ))
         self.add_page()
 
         classIndexEntry = '%s / %s' % (classroom.teacher, self.gradeAbbr.get( classroom.grade, classroom.grade ))
-        self.classroomIndex[ classIndexEntry ] = [ self.page_no() ]
+        self.classroomIndex[ classIndexEntry ] = [ self.page_no() + + self.page_start ]
 
         self.currCol = 0
         self.topY = self.get_y()
@@ -198,7 +212,7 @@ class MXDirectoryPDF(FPDF):
                 # add to the index
                 if g.lastname and g.firstname:
                     gnameIndex = g.lastname + ', ' + g.firstname
-                    if not self.parentIndex.has_key(gnameIndex):
+                    if not gnameIndex in self.parentIndex:
                         self.parentIndex[gnameIndex] = set()
                     self.parentIndex[gnameIndex].add( self.page_no() )
 
@@ -206,7 +220,7 @@ class MXDirectoryPDF(FPDF):
                     hite += self.mcell( monly, 0, 2, '', 0, 2)
 
                 first = False
-                gname = string.strip( xstr(g.firstname) + ' ' + xstr(g.lastname) )
+                gname = ( xstr(g.firstname) + ' ' + xstr(g.lastname) ).strip()
                 if gname:
                     self.mset_font( monly, 'Arial', 'B', 8)
                     hite += self.mcell( monly, self.colWidth, 4, gname, 0, 2)
@@ -218,13 +232,16 @@ class MXDirectoryPDF(FPDF):
                 if g.address and (not g.address in listedAddrs):
                     addr = g.address
                     fields += [ addr.address1, addr.address2, addr.displayCity() ]
-
                     listedAddrs.append( addr )
 
                 for p in g.phones:
                     if not p in listedPhones:
-                        if p.role and p.number:
-                            fields += [ '%s: %s' % ( p.role, p.number)]
+                        if p.number:
+                        #if p.role and p.number:
+                            role = p.role
+                            # DBG: we want to list all phones as "Phone"
+                            role="Phone"
+                            fields += [ '%s: %s' % ( role, p.number)]
                             listedPhones.append(p)
 
                 for field in fields:
@@ -268,11 +285,11 @@ class MXDirectoryPDF(FPDF):
         for item in indexItems:
             letter = item[0][0].upper()
 
-            if not itemsByLetter.has_key( letter ):
+            if not letter in itemsByLetter:
                 itemsByLetter[letter] = []
             itemsByLetter[letter].append( item )
 
-        usedLetters = itemsByLetter.keys()
+        usedLetters = list(itemsByLetter.keys())
         usedLetters.sort()
 
         self.currCol = 0
@@ -307,7 +324,7 @@ class MXDirectoryPDF(FPDF):
 
                 self.checkIndexColumn(0)
 
-                sItem = unicode(item[0])
+                sItem = item[0]
 
                 pages = list(item[1])
                 pages.sort()
@@ -344,13 +361,13 @@ class MXDirectoryPDF(FPDF):
 
     def genStudentIndex(self):
 
-        studentIndexItems = self.studentIndex.iteritems()
+        studentIndexItems = self.studentIndex.items()
         self.genIndex( "Student Index by First Name", studentIndexItems )
 
-        parentIndexItems = self.parentIndex.iteritems()
+        parentIndexItems = self.parentIndex.items()
         self.genIndex( "Guardian Index by Last Name", parentIndexItems )
 
-        classroomIndexItems = self.classroomIndex.iteritems()
+        classroomIndexItems = self.classroomIndex.items()
         #print self.classroomIndex
         self.genIndex( "Classroom Index", classroomIndexItems, False )
 
@@ -362,10 +379,11 @@ def generatePDF( pdf_file, classSheet ):
     pdf.set_auto_page_break( False, 0.0 )
 
     dbgRoomCount = 0
-    sortKeyForGrade = { 'TK' : -1, 'K' : 0 }
+    sortKeyForGrade = { 'TK' : -1, 'K' : 0, 'KG' : 0,  'X' :99 }
     rooms = list(model.Classroom.query.all())
 
-    rooms.sort( key=lambda x: ( sortKeyForGrade.get( x.grade, "Z"+x.grade ), x.teacher) )
+
+    rooms.sort( key=lambda x: ( int(sortKeyForGrade.get( x.grade, x.grade )), x.teacher) )
 
     for room in rooms:
 

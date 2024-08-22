@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/env python3
 # -*- coding: utf-8 -*-
 
 # =========================================
@@ -17,7 +17,8 @@ import admin
 
 from flask import Flask, render_template, url_for, abort, Markup, request, session, redirect
 from flask import escape
-from flask.ext.sqlalchemy import SQLAlchemy
+#from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_, and_
 
 # -----------------------------------------------------------
@@ -29,6 +30,7 @@ app.config.from_envvar( 'MXDIR_SETTINGS' )
 # Session
 app.secret_key = app.config['SESSION_KEY']
 app.config['SESSION_TYPE'] = 'filesystem'
+#app.config['SESSION_TYPE'] = 'null'
 
 # Remove any existing loggers
 while len(logging.root.handlers):
@@ -57,13 +59,13 @@ model.db.init_app(app)
 admin.init_admin(app)
 
 def modification_date(filename):
-    print filename
+    #print filename
     if not os.path.exists(filename):
-        print "not exist"
+        #print "not exist"
         return None
 
     t = os.path.getmtime(filename)
-    print t
+    #print t
     return datetime.datetime.fromtimestamp(t)
 
 def pdfInfo( filename, desc ):
@@ -85,7 +87,7 @@ def index():
     classesForGrade = {}
     for cc in  model.Classroom.query.all():
 
-        if not classesForGrade.has_key( cc.grade ):
+        if not cc.grade in classesForGrade:
             classesForGrade[cc.grade] = []
 
         classesForGrade[cc.grade].append( cc )
@@ -96,7 +98,7 @@ def index():
             ]
 
 
-    return render_template( "index.html", grades=[ 'TK','K','','1','2','3','4','5'],
+    return render_template( "index.html", grades=[ 'TK','KG','','1','2','3','4','5'],
                             classesForGrade = classesForGrade,
                             pdfFiles=pdfFiles)
 
@@ -104,7 +106,7 @@ def index():
 def classroom( cc_id ):
 
     classroom = model.Classroom.query.get( cc_id )
-    print "Classroom", classroom
+    #print "Classroom", classroom
 
     return render_template( "class.html", classroom=classroom )
 
@@ -113,7 +115,7 @@ def test():
     guardians = model.Guardian.query.all()
 
     for g in guardians:
-        print g.firstname, g.lastname, g.email
+        print (f" Guardian: {g.firstname}, {g.lastname}, {g.email}")
 
     return "..."
 
@@ -139,7 +141,7 @@ if __name__ == '__main__':
     # model.rebuild_db()
     # sys.exit(1)
 
-    app.run(host='192.168.1.172', debug=True)
-    #app.run(host='192.168.1.188', debug=True)
+    app.run(host='192.168.1.242', debug=True)
+    #app.run( host='10.0.0.11', debug=True)
     #app.run( debug=True)	
 
